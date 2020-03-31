@@ -1,0 +1,89 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/05/CPU.hdl
+
+/**
+ * The Hack CPU (Central Processing unit), consisting of an ALU,
+ * two registers named A and D, and a program counter named PC.
+ * The CPU is designed to fetch and execute instructions written in 
+ * the Hack machine language. In particular, functions as follows:
+ * Executes the inputted instruction according to the Hack machine 
+ * language specification. The D and A in the language specification
+ * refer to CPU-resident registers, while M refers to the external
+ * memory location addressed by A, i.e. to Memory[A]. The inM input 
+ * holds the value of this location. If the current instruction needs 
+ * to write a value to M, the value is placed in outM, the address 
+ * of the target location is placed in the addressM output, and the 
+ * writeM control bit is asserted. (When writeM==0, any value may 
+ * appear in outM). The outM and writeM outputs are combinational: 
+ * they are affected instantaneously by the execution of the current 
+ * instruction. The addressM and pc outputs are clocked: although they 
+ * are affected by the execution of the current instruction, they commit 
+ * to their new values only in the next time step. If reset==1 then the 
+ * CPU jumps to address 0 (i.e. pc is set to 0 in next time step) rather 
+ * than to the address resulting from executing the current instruction. 
+ */
+
+CHIP CPU {
+
+    IN  inM[16],         // M value input  (M = contents of RAM[A])
+        instruction[16], // Instruction for execution
+        reset;           // Signals whether to re-start the current
+                         // program (reset==1) or continue executing
+                         // the current program (reset==0).
+
+    OUT outM[16],        // M value output
+        writeM,          // Write to M? 
+        addressM[15],    // Address in data memory (of M)
+        pc[15];          // address of next instruction
+
+    PARTS:
+    ARegister(in=inOfA, load=loadA, out=outOfA);
+    DRegister(in=inOfD, load=loadD, out=outOfD);
+    ALU(x=inOfX, y=inOfY, zx=c1, nx=c2, zy=c3, ny=c4, f=c5, no=c6, out=outOfALU, zr=zero, ng=negative);
+    PC(in=jumpTo, load=isJump, inc=isNext, reset=reset, out=outOfPC);
+
+    // Decode instruction
+    // A-instruction: 0 x x x x  x  x  x  x  x  x  x  x  x  x  x
+    // C-instruction: 1 1 1 a c1 c2 c3 c4 c5 c6 d1 d2 d3 j1 j2 j3
+    DMux(in=true, sel=instruction[15], a=typeA, b=typeC);
+    And(a=instruction[0], b=typeC, out=j3);
+    And(a=instruction[1], b=typeC, out=j2);
+    And(a=instruction[2], b=typeC, out=j1);
+    And(a=instruction[3], b=typeC, out=d3);
+    And(a=instruction[4], b=typeC, out=d2);
+    And(a=instruction[5], b=typeC, out=d1);
+    And(a=instruction[6], b=typeC, out=c6);
+    And(a=instruction[7], b=typeC, out=c5);
+    And(a=instruction[8], b=typeC, out=c4);
+    And(a=instruction[9], b=typeC, out=c3);
+    And(a=instruction[10], b=typeC, out=c2);
+    And(a=instruction[11], b=typeC, out=c1);
+    And(a=instruction[12], b=typeC, out=a);
+
+    // Control of A-Register:
+    Or(a=typeA, b=d1, out=loadA);
+    Mux16(a=outOfALU, b=instruction, sel=typeA, out=inOfA);
+    // Control of D-Register:
+    And16(a=outOfALU, b=true, out=inOfD);
+    And(a=d2, b=true, out=loadD);
+    // Control of ALU:
+    And16(a=outOfD, b=true, out=inOfX);
+    Mux16(a=outOfA, b=inM, sel=a, out=inOfY);
+    // Control of Memory:
+    And(a=d3, b=true, out=writeM);
+    And16(a=outOfALU, b=true, out=outM);
+    Trunc15(in=outOfA, out=addressM);
+    // Control of PC:
+    And16(a=outOfA, b=true, out=jumpTo);
+    Or(a=negative, b=zero, out=notPositive);
+    Not(in=notPositive, out=positive);
+    And(a=positive, b=j3, out=positiveJump);
+    And(a=zero, b=j2, out=zeroJump);
+    And(a=negative, b=j1, out=negativeJump);
+    Or(a=positiveJump, b=negativeJump, out=pnJump);
+    Or(a=zeroJump, b=pnJump, out=isJump);
+    Not(in=isJump, out=isNext);
+    Trunc15(in=outOfPC, out=pc);
+}

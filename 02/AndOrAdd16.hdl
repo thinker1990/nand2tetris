@@ -1,0 +1,12 @@
+// out = a + b  when f = 1
+// out = a & b  when f = 0
+
+CHIP AndOrAdd16 {
+    IN a[16], b[16], f;
+    OUT out[16];
+
+    PARTS:
+    And16(a=a, b=b, out=and);
+    Add16(a=a, b=b, out=add);
+    Mux16(a=and, b=add, sel=f, out=out);
+}

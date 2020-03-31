@@ -1,0 +1,10 @@
+// out = 1 when in < 0 else
+// out = 0 
+
+CHIP IsNegate16 {
+    IN in[16];
+    OUT out;
+
+    PARTS:
+    And(a=in[15], b=true, out=out);
+}

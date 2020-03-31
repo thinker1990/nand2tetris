@@ -1,0 +1,10 @@
+// out = zero when sel = 1
+// out = in   when sel = 0
+
+CHIP Zero16 {
+    IN in[16], sel;
+    OUT out[16];
+
+    PARTS:
+    Mux16(a=in, b=false, sel=sel, out=out);
+}
