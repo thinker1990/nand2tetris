@@ -7,3 +7,4 @@ not
 eq
 gt
 lt
+push constant 10

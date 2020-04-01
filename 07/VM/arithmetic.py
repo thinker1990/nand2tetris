@@ -1,5 +1,5 @@
 from re import sub
-from datetime import datetime
+from uuid import uuid4
 
 
 class Arithmetic:
@@ -30,16 +30,16 @@ class Arithmetic:
         D=M
         {_POP}
         D=D-M
-        @TRUE_CONDITION_{{uid}}
+        @IF_TRUE_{{{{uid}}}}
         D;{{jump}}
         D=0
         {_PUSH}
-        @CONTINUE_{{uid}}
+        @CONTINUE_{{{{uid}}}}
         0;JMP
-        (TRUE_CONDITION_{{uid}})
+        (IF_TRUE_{{{{uid}}}})
         D=-1
         {_PUSH}
-        (CONTINUE_{{uid}})'''
+        (CONTINUE_{{{{uid}}}})'''
 
     _COMMAND_TO_ASSEMBLY = {
         'add': _BINARY_OP.format(op='+'),
@@ -48,9 +48,9 @@ class Arithmetic:
         'and': _BINARY_OP.format(op='&'),
         'or': _BINARY_OP.format(op='|'),
         'not': _UNARY_OP.format(op='!'),
-        'eq': _LOGICAL_OP.format(jump='JEQ', uid=1),
-        'gt': _LOGICAL_OP.format(jump='JGT', uid=1),
-        'lt': _LOGICAL_OP.format(jump='JLT', uid=1)
+        'eq': _LOGICAL_OP.format(jump='JEQ'),
+        'gt': _LOGICAL_OP.format(jump='JGT'),
+        'lt': _LOGICAL_OP.format(jump='JLT')
     }
 
     _LOGICAL_CMD = ('eq', 'gt', 'lt')
@@ -60,12 +60,12 @@ class Arithmetic:
 
     def assembly(self):
         asm = self._COMMAND_TO_ASSEMBLY[self.command]
-        # if self.command in self._LOGICAL_CMD:
-        #     asm = asm.format(uid=self.unique_id())
+        if self.command in self._LOGICAL_CMD:
+            asm = asm.format(uid=self.unique_id())
         return self.format(asm)
 
     def unique_id(self):
-        return datetime.now().timestamp()
+        return uuid4().hex
 
     def format(self, asm):
         return sub(r'[ \t]+', '', asm)

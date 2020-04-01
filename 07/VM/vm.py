@@ -1,5 +1,6 @@
 from re import sub
 from arithmetic import Arithmetic
+from memory_access import MemoryAccess
 
 
 class VM:
@@ -18,7 +19,7 @@ class VM:
         if cmd_type in self._ARITHMETIC:
             return Arithmetic(command).assembly()
         elif cmd_type in self._MEMORY_ACCESS:
-            return ''  # TODO
+            return MemoryAccess(command).assembly()
         else:
             return ''
 
