@@ -1,29 +1,29 @@
 from re import sub
+from arithmetic import Arithmetic
 
 
 class VM:
 
+    _ARITHMETIC = ('add', 'sub', 'neg', 'and', 'or', 'not', 'eq', 'gt', 'lt')
+    _MEMORY_ACCESS = ('push', 'pop')
+
     def translate(self, vm_text):
         lines = vm_text.split('\n')
         commands = _Preprocessor().process(lines)
-        parsed = map(self.parse, commands)
+        asm_parts = map(self.get_asm, commands)
+        return ''.join(asm_parts)
 
-    def parse(self, command: str):
+    def get_asm(self, command: str):
         cmd_type = self.command_part(command)
-        parse_method = self._COMMAND_PARSE_MAP[cmd_type]
-        return parse_method(command)
+        if cmd_type in self._ARITHMETIC:
+            return Arithmetic(command).assembly()
+        elif cmd_type in self._MEMORY_ACCESS:
+            return ''  # TODO
+        else:
+            return ''
 
     def command_part(self, command: str):
         return command.split()[0].lower()
-
-    def parse_add(self, command: str):
-        return AddCommand(command)
-
-
-class AddCommand:
-
-    def assembly(self):
-        pass
 
 
 class _Preprocessor:
@@ -34,7 +34,7 @@ class _Preprocessor:
 
     def is_command(self, line: str):
         comment_line = line.lstrip().startswith('//')
-        empty_line = line.isspace()
+        empty_line = line.isspace() or line == ''
         return not (comment_line or empty_line)
 
     def remove_inline_comment(self, line: str):
