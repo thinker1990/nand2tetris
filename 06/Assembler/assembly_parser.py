@@ -1,5 +1,4 @@
 from re import sub
-from enum import Enum
 
 
 class AssemblyParser:
@@ -73,7 +72,7 @@ class _Preprocessor:
 
     def is_command(self, line: str):
         comment_line = line.lstrip().startswith('//')
-        empty_line = line.isspace()
+        empty_line = line.isspace() or line == ''
         return not (comment_line or empty_line)
 
     def remove_whitespace(self, line: str):

@@ -1,0 +1,10 @@
+add
+sub
+neg
+and
+or
+not
+eq
+gt
+lt
+push constant 10
