@@ -1,12 +1,13 @@
 from re import sub
 from arithmetic import Arithmetic
 from memory_access import MemoryAccess
+import constants as const
 
 
 class VM:
 
-    _ARITHMETIC = ('add', 'sub', 'neg', 'and', 'or', 'not', 'eq', 'gt', 'lt')
-    _MEMORY_ACCESS = ('push', 'pop')
+    def __init__(self, file_name):
+        self.file = file_name
 
     def translate(self, vm_text):
         lines = vm_text.split('\n')
@@ -16,12 +17,12 @@ class VM:
 
     def get_asm(self, command: str):
         cmd_type = self.command_part(command)
-        if cmd_type in self._ARITHMETIC:
+        if cmd_type in const.ARITHMETIC_CMD:
             return Arithmetic(command).assembly()
-        elif cmd_type in self._MEMORY_ACCESS:
-            return MemoryAccess(command).assembly()
+        elif cmd_type in const.MEMORY_ACCESS_CMD:
+            return MemoryAccess(command, self.file).assembly()
         else:
-            return ''
+            return ''  # TODO
 
     def command_part(self, command: str):
         return command.split()[0].lower()

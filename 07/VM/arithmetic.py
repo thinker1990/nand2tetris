@@ -1,73 +1,64 @@
 from re import sub
 from uuid import uuid4
+from constants import POP, PUSH
 
 
 class Arithmetic:
 
-    _POP = '''@SP
-              M=M-1
-              @SP
-              A=M'''
+    _UNARY = f'''
+        {POP}
+        D={{op}}M
+        {PUSH}'''
 
-    _PUSH = '''@SP
-               A=M
-               M=D
-               @SP
-               M=M+1'''
-
-    _BINARY_OP = f'''
-        {_POP}
+    _BINARY = f'''
+        {POP}
         D=M
-        {_POP}
+        {POP}
         D=M{{op}}D
-        {_PUSH}'''
+        {PUSH}'''
 
-    _UNARY_OP = f'''
-        {_POP}
-        D={{op}}D
-        {_PUSH}'''
-
-    _LOGICAL_OP = f'''
-        {_POP}
+    _LOGICAL = f'''
+        {POP}
         D=M
-        {_POP}
+        {POP}
         D=M-D
-        @IF_TRUE_{{{{uid}}}}
+        @IF_TRUE_UID
         D;{{jump}}
         D=0
-        {_PUSH}
-        @CONTINUE_{{{{uid}}}}
+        {PUSH}
+        @CONTINUE_UID
         0;JMP
-        (IF_TRUE_{{{{uid}}}})
+    (IF_TRUE_UID)
         D=-1
-        {_PUSH}
-        (CONTINUE_{{{{uid}}}})'''
+        {PUSH}
+    (CONTINUE_UID)'''
 
     _COMMAND_TO_ASSEMBLY = {
-        'add': _BINARY_OP.format(op='+'),
-        'sub': _BINARY_OP.format(op='-'),
-        'neg': _UNARY_OP.format(op='-'),
-        'and': _BINARY_OP.format(op='&'),
-        'or': _BINARY_OP.format(op='|'),
-        'not': _UNARY_OP.format(op='!'),
-        'eq': _LOGICAL_OP.format(jump='JEQ'),
-        'gt': _LOGICAL_OP.format(jump='JGT'),
-        'lt': _LOGICAL_OP.format(jump='JLT')
+        'add': _BINARY.format(op='+'),
+        'sub': _BINARY.format(op='-'),
+        'neg': _UNARY.format(op='-'),
+        'and': _BINARY.format(op='&'),
+        'or': _BINARY.format(op='|'),
+        'not': _UNARY.format(op='!'),
+        'eq': _LOGICAL.format(jump='JEQ'),
+        'gt': _LOGICAL.format(jump='JGT'),
+        'lt': _LOGICAL.format(jump='JLT')
     }
-
-    _LOGICAL_CMD = ('eq', 'gt', 'lt')
 
     def __init__(self, command):
         self.command = command.strip().lower()
 
     def assembly(self):
         asm = self._COMMAND_TO_ASSEMBLY[self.command]
-        if self.command in self._LOGICAL_CMD:
-            asm = asm.format(uid=self.unique_id())
+        asm = self.make_label_unique(asm)
         return self.format(asm)
 
+    def make_label_unique(self, asm):
+        return sub(r'UID', self.unique_id(), asm)
+
     def unique_id(self):
-        return uuid4().hex
+        uuid = uuid4().hex.upper()
+        return uuid[:10]
 
     def format(self, asm):
         return sub(r'[ \t]+', '', asm)
