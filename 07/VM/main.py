@@ -17,7 +17,7 @@ def vm_file(path):
 
 
 def translate(vm):
-    return VM().translate(vm.read_text())
+    return VM(vm.stem).translate(vm.read_text())
 
 
 def merge_assembly(parts):
