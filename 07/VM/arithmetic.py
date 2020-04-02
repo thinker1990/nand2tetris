@@ -9,7 +9,9 @@ class Arithmetic:
               @SP
               A=M'''
 
-    _PUSH = '''M=D
+    _PUSH = '''@SP
+               A=M
+               M=D
                @SP
                M=M+1'''
 
@@ -17,7 +19,7 @@ class Arithmetic:
         {_POP}
         D=M
         {_POP}
-        D=D{{op}}M
+        D=M{{op}}D
         {_PUSH}'''
 
     _UNARY_OP = f'''
@@ -29,7 +31,7 @@ class Arithmetic:
         {_POP}
         D=M
         {_POP}
-        D=D-M
+        D=M-D
         @IF_TRUE_{{{{uid}}}}
         D;{{jump}}
         D=0
