@@ -1,5 +1,5 @@
 from predefined_symbols import PREDEFINED_SYMBOLS
-from assembly_parser import A_Command, L_Command
+from command import A_Command, L_Command
 
 
 class SymbolTableBuilder:
