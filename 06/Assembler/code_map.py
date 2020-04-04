@@ -1,6 +1,4 @@
-
-
-DEST_TABLE = {
+DEST = {
     'null': '000',
     'M': '001',
     'D': '010',
@@ -11,7 +9,7 @@ DEST_TABLE = {
     'AMD': '111'
 }
 
-JUMP_TABLE = {
+JUMP = {
     'null': '000',
     'JGT': '001',
     'JEQ': '010',
@@ -22,7 +20,7 @@ JUMP_TABLE = {
     'JMP': '111'
 }
 
-COMP_TABLE = {
+COMP = {
     '0': '0101010',
     '1': '0111111',
     '-1': '0111010',
