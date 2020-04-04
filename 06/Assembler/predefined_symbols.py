@@ -1,5 +1,3 @@
-
-
 PREDEFINED_SYMBOLS = {
     'SP': 0,
     'LCL': 1,

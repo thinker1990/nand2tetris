@@ -4,8 +4,8 @@ from re import sub
 class Preprocessor:
 
     def process(self, asm):
-        asm_without_comments = self.remove_comment(asm)
-        return self.remove_whitespace(asm_without_comments)
+        no_comments = self.remove_comment(asm)
+        return self.remove_whitespace(no_comments)
 
     def remove_comment(self, text):
         return sub(r'//.*', '', text)

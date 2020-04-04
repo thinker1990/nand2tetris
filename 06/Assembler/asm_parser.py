@@ -7,10 +7,10 @@ class Parser:
         lines = asm.split()
         return [*map(self.parse_line, lines)]
 
-    def parse_line(self, command):
-        if command.startswith('@'):
-            return A_Command(command)
-        elif command.startswith('('):
-            return L_Command(command)
+    def parse_line(self, text):
+        if text.startswith('@'):
+            return A_Command(text)
+        elif text.startswith('('):
+            return L_Command(text)
         else:
-            return C_Command(command)
+            return C_Command(text)
