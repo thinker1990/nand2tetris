@@ -4,7 +4,7 @@ from command import A_Command, C_Command, L_Command
 class Parser:
 
     def parse(self, asm):
-        lines = asm.split()
+        lines = asm.split('\n')
         return [*map(self.parse_line, lines)]
 
     def parse_line(self, text):

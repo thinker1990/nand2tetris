@@ -3,8 +3,8 @@ from re import sub
 
 class Preprocessor:
 
-    def process(self, asm):
-        cmds = filter(self.command, asm.split('\n'))
+    def process(self, vm):
+        cmds = filter(self.command, vm.split('\n'))
         cmds = map(self.remove_inline_comment, cmds)
         cmds = map(self.remove_extra_whitespace, cmds)
         return '\n'.join(cmds)
