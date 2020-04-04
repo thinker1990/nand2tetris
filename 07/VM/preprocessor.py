@@ -3,10 +3,10 @@ from re import sub
 
 class Preprocessor:
 
-    def process(self, asm):
-        cmds = filter(self.command, asm.split('\n'))
+    def process(self, vm):
+        cmds = filter(self.command, vm.split('\n'))
         cmds = map(self.remove_inline_comment, cmds)
-        cmds = map(self.remove_whitespace, cmds)
+        cmds = map(self.remove_extra_whitespace, cmds)
         return '\n'.join(cmds)
 
     def command(self, line):
@@ -17,5 +17,5 @@ class Preprocessor:
     def remove_inline_comment(self, line):
         return sub(r'//.*', '', line)
 
-    def remove_whitespace(self, line):
-        return sub(r'[ \t]+', '', line)
+    def remove_extra_whitespace(self, line):
+        return sub(r'[ \t]+', ' ', line.strip())

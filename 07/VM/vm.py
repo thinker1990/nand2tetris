@@ -1,43 +1,18 @@
-from re import sub
-from arithmetic import Arithmetic
-from memory_access import MemoryAccess
-import constants as const
+from preprocessor import Preprocessor
+from vm_parser import Parser
+from code_generator import CodeGenerator
 
 
 class VM:
 
-    def __init__(self, file_name):
-        self.file = file_name
+    def compile(self, vms):
+        asm_parts = map(self.compile_single, vms)
+        return self.merge(asm_parts)
 
-    def translate(self, vm_text):
-        lines = vm_text.split('\n')
-        commands = _Preprocessor().process(lines)
-        asm_parts = map(self.get_asm, commands)
-        return ''.join(asm_parts)
+    def compile_single(self, vm):
+        pure_vm = Preprocessor().process(vm.read_text())
+        parsed_vm = Parser().parse(pure_vm)
+        return CodeGenerator(vm.stem).generate(parsed_vm)
 
-    def get_asm(self, command: str):
-        cmd_type = self.command_part(command)
-        if cmd_type in const.ARITHMETIC_CMD:
-            return Arithmetic(command).assembly()
-        elif cmd_type in const.MEMORY_ACCESS_CMD:
-            return MemoryAccess(command, self.file).assembly()
-        else:
-            return ''  # TODO
-
-    def command_part(self, command: str):
-        return command.split()[0].lower()
-
-
-class _Preprocessor:
-
-    def process(self, lines):
-        commands = filter(self.is_command, lines)
-        return map(self.remove_inline_comment, commands)
-
-    def is_command(self, line: str):
-        comment_line = line.lstrip().startswith('//')
-        empty_line = line.isspace() or line == ''
-        return not (comment_line or empty_line)
-
-    def remove_inline_comment(self, line: str):
-        return sub(r'//.+', '', line)
+    def merge(self, parts):
+        return '\n'.join(parts)

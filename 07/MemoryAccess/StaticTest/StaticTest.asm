@@ -1,4 +1,4 @@
-
+//StaticTest
 @111
 D=A
 @SP

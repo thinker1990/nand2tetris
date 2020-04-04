@@ -16,9 +16,9 @@ def source_assembly():
 
 
 def target_binary(source_path):
-    target_dir = source_path.parent
-    target_file = f'{source_path.stem}.hack'
-    return target_dir.joinpath(target_file)
+    directory = source_path.parent
+    hack = f'{source_path.stem}.hack'
+    return directory.joinpath(hack)
 
 
 if __name__ == '__main__':

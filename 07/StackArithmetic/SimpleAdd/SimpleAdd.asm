@@ -1,4 +1,4 @@
-
+//SimpleAdd
 @7
 D=A
 @SP
@@ -22,7 +22,7 @@ D=M
 M=M-1
 @SP
 A=M
-D=D+M
+D=M+D
 @SP
 A=M
 M=D
