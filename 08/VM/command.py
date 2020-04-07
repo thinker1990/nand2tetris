@@ -47,4 +47,4 @@ class FunctionCall:
         return self.cmd[1]
 
     def arg_count(self):
-        return self.cmd[2]
+        return int(self.cmd[2])

@@ -19,6 +19,8 @@ class CodeGenerator:
             return self.memory_access_asm(cmd)
         elif isinstance(cmd, ProgramFlow):
             return self.program_flow_asm(cmd)
+        elif isinstance(cmd, FunctionCall):
+            return self.function_call_asm(cmd)
         else:
             raise(f'Undefined vm command: {cmd}')
 
@@ -43,3 +45,11 @@ class CodeGenerator:
             return goto_asm(cmd.label())
         else:
             return if_goto_asm(cmd.label())
+
+    def function_call_asm(self, cmd):
+        if cmd.operation() == 'function':
+            return function_asm(cmd.func_name(), cmd.arg_count())
+        elif cmd.operation() == 'call':
+            return call_asm(cmd.func_name(), cmd.arg_count())
+        else:
+            return return_asm()

@@ -162,20 +162,20 @@ def call_asm(func, arg_count):
                {save_calling('THAT')}
                {reset_ARG(arg_count)}
                {reset_LCL()}
-               {goto_func(func)}
+               {goto_label(func)}
                ({ret})'''
 
 
 def return_asm():
     return f'''{called_frame()}
-               {get_ret()}
-               {save_calling('ARG')}
-               {save_calling('THIS')}
-               {save_calling('THAT')}
-               {reset_ARG(arg_count)}
-               {reset_LCL()}
-               {goto_func(func)}
-               ({ret})'''
+               {restore('RET', 5)}
+               {return_value()}
+               {restore_SP()}
+               {restore('THAT', 1)}
+               {restore('THIS', 2)}
+               {restore('ARG', 3)}
+               {restore('LCL', 4)}
+               {goto_addr('RET')}'''
 
 
 def init_vars(count):
@@ -215,7 +215,7 @@ def reset_LCL():
                M=D'''
 
 
-def goto_func(func):
+def goto_label(func):
     return goto_asm(func)
 
 
@@ -226,11 +226,32 @@ def called_frame():
                M=D'''
 
 
-def get_ret():
+def restore(target, offset):
     return f'''@frame
                D=M
-               @5
+               @{offset}
                A=D-A
                D=M
-               @ret
+               @{target}
                M=D'''
+
+
+def return_value():
+    return f'''{POP}
+               D=M
+               @ARG
+               A=M
+               M=D'''
+
+
+def restore_SP():
+    return f'''@ARG
+               D=M+1
+               @SP
+               M=D'''
+
+
+def goto_addr(label):
+    return f'''@{label}
+               A=M
+               0;JMP'''
