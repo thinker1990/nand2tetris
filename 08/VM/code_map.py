@@ -115,7 +115,7 @@ POP_ASM = f'''{{SET_A}}
               M=D'''
 
 
-def push_asm(segment, index, file):
+def push_asm(segment, index, file=None):
     tpl, reg = SEGMENTS[segment]
     addr = tpl.format(base=reg, idx=index, file=file)
     if segment == 'constant':
@@ -124,7 +124,7 @@ def push_asm(segment, index, file):
         return PUSH_ASM.format(SET_A=addr)
 
 
-def pop_asm(segment, index, file):
+def pop_asm(segment, index, file=None):
     tpl, reg = SEGMENTS[segment]
     addr = tpl.format(base=reg, idx=index, file=file)
     return POP_ASM.format(SET_A=addr)
@@ -145,3 +145,67 @@ def if_goto_asm(label):
                D=M
                @{label}
                D;JNE'''
+
+
+# Function calling assembly segments:
+def function_asm(name, var_count):
+    return f'''({name})
+               {init_vars(var_count)}'''
+
+
+def call_asm(func, arg_count):
+    ret = return_address()
+    return f'''{save_ret(ret)}
+               {save_calling('LCL')}
+               {save_calling('ARG')}
+               {save_calling('THIS')}
+               {save_calling('THAT')}
+               {reset_ARG(arg_count)}
+               {reset_LCL()}
+               {goto_func(func)}
+               ({ret})'''
+
+
+def return_asm():
+    pass
+
+
+def init_vars(count):
+    asms = [push_asm('constant', 0) for k in range(count)]
+    return '\n'.join(asms)
+
+
+def return_address():
+    return f'RET_{unique_id()}'
+
+
+def save_ret(addr):
+    return f'''@{addr}
+               D=A
+               {PUSH}'''
+
+
+def save_calling(reg):
+    return f'''@{reg}
+               D=M
+               {PUSH}'''
+
+
+def reset_ARG(count):
+    return f'''@SP
+               D=M
+               @{count+5}
+               D=D-A
+               @ARG
+               M=D'''
+
+
+def reset_LCL():
+    return f'''@SP
+               D=M
+               @LCL
+               M=D'''
+
+
+def goto_func(func):
+    return goto_asm(func)
