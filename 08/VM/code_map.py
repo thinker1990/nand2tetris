@@ -167,7 +167,15 @@ def call_asm(func, arg_count):
 
 
 def return_asm():
-    pass
+    return f'''{called_frame()}
+               {get_ret()}
+               {save_calling('ARG')}
+               {save_calling('THIS')}
+               {save_calling('THAT')}
+               {reset_ARG(arg_count)}
+               {reset_LCL()}
+               {goto_func(func)}
+               ({ret})'''
 
 
 def init_vars(count):
@@ -209,3 +217,20 @@ def reset_LCL():
 
 def goto_func(func):
     return goto_asm(func)
+
+
+def called_frame():
+    return f'''@LCL
+               D=M
+               @frame
+               M=D'''
+
+
+def get_ret():
+    return f'''@frame
+               D=M
+               @5
+               A=D-A
+               D=M
+               @ret
+               M=D'''
