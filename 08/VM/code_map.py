@@ -148,12 +148,12 @@ def if_goto_asm(label):
 
 
 # Function calling assembly segments:
-def function_asm(name, var_count):
+def function_asm(name, var_count=0):
     return f'''({name})
                {init_vars(var_count)}'''
 
 
-def call_asm(func, arg_count):
+def call_asm(func, arg_count=0):
     ret = return_address()
     return f'''{save_ret(ret)}
                {save_calling('LCL')}
@@ -255,3 +255,12 @@ def goto_addr(label):
     return f'''@{label}
                A=M
                0;JMP'''
+
+
+# Bootstrap code:
+def bootstrap_code():
+    return f'''@256
+               D=A
+               @SP
+               M=D
+               {call_asm('Sys.init')}'''
