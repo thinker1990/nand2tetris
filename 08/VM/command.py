@@ -33,3 +33,18 @@ class ProgramFlow:
 
     def label(self):
         return f'{self.func}${self.lb}'
+
+
+class FunctionCall:
+
+    def __init__(self, command):
+        self.cmd = tuple(command.split())
+
+    def operation(self):
+        return self.cmd[0]
+
+    def func_name(self):
+        return self.cmd[1]
+
+    def arg_count(self):
+        return int(self.cmd[2])

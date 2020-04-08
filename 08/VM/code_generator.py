@@ -19,16 +19,22 @@ class CodeGenerator:
             return self.memory_access_asm(cmd)
         elif isinstance(cmd, ProgramFlow):
             return self.program_flow_asm(cmd)
+        elif isinstance(cmd, FunctionCall):
+            return self.function_call_asm(cmd)
         else:
             raise(f'Undefined vm command: {cmd}')
+
+    @classmethod
+    def bootstrap(cls):
+        return cls.trim_space(bootstrap_code())
 
     def merge(self, parts):
         return '\n'.join(parts)
 
     def format(self, asm):
         header = f'//{self.file}'
-        compact = sub(r'[ \t]+', '', asm)
-        return f'{header}\n{compact}'
+        body = self.trim_space(asm)
+        return f'{header}\n{body}'
 
     def memory_access_asm(self, cmd):
         if cmd.operation() == 'push':
@@ -43,3 +49,15 @@ class CodeGenerator:
             return goto_asm(cmd.label())
         else:
             return if_goto_asm(cmd.label())
+
+    def function_call_asm(self, cmd):
+        if cmd.operation() == 'function':
+            return function_asm(cmd.func_name(), cmd.arg_count())
+        elif cmd.operation() == 'call':
+            return call_asm(cmd.func_name(), cmd.arg_count())
+        else:
+            return return_asm()
+
+    @classmethod
+    def trim_space(cls, text):
+        return sub(r'[ \t]+', '', text)

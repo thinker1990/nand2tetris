@@ -115,7 +115,7 @@ POP_ASM = f'''{{SET_A}}
               M=D'''
 
 
-def push_asm(segment, index, file):
+def push_asm(segment, index, file=None):
     tpl, reg = SEGMENTS[segment]
     addr = tpl.format(base=reg, idx=index, file=file)
     if segment == 'constant':
@@ -124,7 +124,7 @@ def push_asm(segment, index, file):
         return PUSH_ASM.format(SET_A=addr)
 
 
-def pop_asm(segment, index, file):
+def pop_asm(segment, index, file=None):
     tpl, reg = SEGMENTS[segment]
     addr = tpl.format(base=reg, idx=index, file=file)
     return POP_ASM.format(SET_A=addr)
@@ -145,3 +145,122 @@ def if_goto_asm(label):
                D=M
                @{label}
                D;JNE'''
+
+
+# Function calling assembly segments:
+def function_asm(name, var_count=0):
+    return f'''({name})
+               {init_vars(var_count)}'''
+
+
+def call_asm(func, arg_count=0):
+    ret = return_address()
+    return f'''{save_ret(ret)}
+               {save_calling('LCL')}
+               {save_calling('ARG')}
+               {save_calling('THIS')}
+               {save_calling('THAT')}
+               {reset_ARG(arg_count)}
+               {reset_LCL()}
+               {goto_label(func)}
+               ({ret})'''
+
+
+def return_asm():
+    return f'''{called_frame()}
+               {restore('RET', 5)}
+               {return_value()}
+               {restore_SP()}
+               {restore('THAT', 1)}
+               {restore('THIS', 2)}
+               {restore('ARG', 3)}
+               {restore('LCL', 4)}
+               {goto_addr('RET')}'''
+
+
+def init_vars(count):
+    asms = [push_asm('constant', 0) for k in range(count)]
+    return '\n'.join(asms)
+
+
+def return_address():
+    return f'RET_{unique_id()}'
+
+
+def save_ret(addr):
+    return f'''@{addr}
+               D=A
+               {PUSH}'''
+
+
+def save_calling(reg):
+    return f'''@{reg}
+               D=M
+               {PUSH}'''
+
+
+def reset_ARG(count):
+    return f'''@SP
+               D=M
+               @{count+5}
+               D=D-A
+               @ARG
+               M=D'''
+
+
+def reset_LCL():
+    return f'''@SP
+               D=M
+               @LCL
+               M=D'''
+
+
+def goto_label(func):
+    return goto_asm(func)
+
+
+def called_frame():
+    return f'''@LCL
+               D=M
+               @frame
+               M=D'''
+
+
+def restore(target, offset):
+    return f'''@frame
+               D=M
+               @{offset}
+               A=D-A
+               D=M
+               @{target}
+               M=D'''
+
+
+def return_value():
+    return f'''{POP}
+               D=M
+               @ARG
+               A=M
+               M=D'''
+
+
+def restore_SP():
+    return f'''@ARG
+               D=M+1
+               @SP
+               M=D'''
+
+
+def goto_addr(label):
+    return f'''@{label}
+               A=M
+               0;JMP'''
+
+
+# Bootstrap code:
+def bootstrap_code():
+    return f'''@256
+               D=A
+               @SP
+               M=D
+               {call_asm('Sys.init')}'''
