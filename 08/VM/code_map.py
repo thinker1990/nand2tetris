@@ -204,15 +204,13 @@ def reset_ARG(count):
                D=M
                @{count+5}
                D=D-A
-               @ARG
-               M=D'''
+               {set_to('ARG')}'''
 
 
 def reset_LCL():
     return f'''@SP
                D=M
-               @LCL
-               M=D'''
+               {set_to('LCL')}'''
 
 
 def goto_label(func):
@@ -222,8 +220,7 @@ def goto_label(func):
 def called_frame():
     return f'''@LCL
                D=M
-               @frame
-               M=D'''
+               {set_to('frame')}'''
 
 
 def restore(target, offset):
@@ -232,8 +229,7 @@ def restore(target, offset):
                @{offset}
                A=D-A
                D=M
-               @{target}
-               M=D'''
+               {set_to(target)}'''
 
 
 def return_value():
@@ -247,8 +243,7 @@ def return_value():
 def restore_SP():
     return f'''@ARG
                D=M+1
-               @SP
-               M=D'''
+               {set_to('SP')}'''
 
 
 def goto_addr(label):
@@ -261,6 +256,10 @@ def goto_addr(label):
 def bootstrap_code():
     return f'''@256
                D=A
-               @SP
-               M=D
+               {set_to('SP')}
                {call_asm('Sys.init')}'''
+
+
+def set_to(location):
+    return f'''@{location}
+               M=D'''
