@@ -4,7 +4,7 @@ from symbol_table import SymbolTableBuilder
 from code_generator import CodeGenerator
 
 
-class Assembler():
+class Assembler:
 
     def assembly(self, asm):
         pure_asm = Preprocessor().process(asm)
