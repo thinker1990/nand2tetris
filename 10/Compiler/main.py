@@ -26,10 +26,11 @@ def parse(jack):
 
 def target_xml(source_path):
     directory = source_path.parent
-    xml = f'{source_path.stem}.xml'
+    xml = f'{source_path.stem}_I.xml'
     return directory.joinpath(xml)
 
 
 if __name__ == '__main__':
     path = source_path()
-    map(parse, source_jacks(path))
+    for jack in source_jacks(path):
+        parse(jack)

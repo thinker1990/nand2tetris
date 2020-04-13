@@ -2,4 +2,4 @@
 class Analyzer:
 
     def parse(self, tokens):
-        pass
+        return tokens  # TODO

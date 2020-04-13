@@ -32,5 +32,18 @@ class Tokenizer:
         if word in SYMBOLS:
             self.text = self.text[1:]
             return word
-        # TODO
-        
+
+        if word == '"':
+            idx = 1
+            while self.text[idx] != '"':
+                idx += 1
+            word = self.text[:idx+1]
+            self.text = self.text[idx+1:]
+            return word
+
+        idx = 1
+        while not (self.text[idx] in SYMBOLS or self.text[idx] == ' '):
+            idx += 1
+        word = self.text[:idx]
+        self.text = self.text[idx:]
+        return word
