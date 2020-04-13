@@ -29,24 +29,24 @@ class Tokenizer:
     def next_word(self):
         first = self.first_letter()
         if first in SYMBOLS:
-            return self.trim_symbol()
+            return self.trimmed_symbol()
         elif first == '"':
-            return self.trim_string()
+            return self.trimmed_string()
         else:
-            return self.trim_word()
+            return self.trimmed_word()
 
     def first_letter(self):
         self.text = self.text.lstrip()
         return self.text[0]
 
-    def trim_symbol(self):
+    def trimmed_symbol(self):
         return self.trim_return(1)
 
-    def trim_string(self):
+    def trimmed_string(self):
         close_quote = self.text.find('"', 1)
         return self.trim_return(close_quote+1)
 
-    def trim_word(self):
+    def trimmed_word(self):
         idx = self.next_terminal_idx()
         return self.trim_return(idx)
 
