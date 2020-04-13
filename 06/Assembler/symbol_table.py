@@ -34,7 +34,7 @@ class SymbolTableBuilder:
         return isinstance(cmd, A_Command) and not cmd.symbol().isnumeric()
 
 
-class SymbolTable():
+class SymbolTable:
 
     def __init__(self, symbol_table: dict):
         self.symbol_table = symbol_table.copy()

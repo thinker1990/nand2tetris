@@ -1,7 +1,7 @@
 from command import *
 
 
-class Parser():
+class Parser:
 
     _ARITHMETIC_CMD = ('add', 'sub', 'neg', 'and',
                        'or', 'not', 'eq', 'gt', 'lt')
