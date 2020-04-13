@@ -27,23 +27,36 @@ class Tokenizer:
             return (TOKEN_TYPE.IDENTIFIER, word)
 
     def next_word(self):
+        first = self.first_letter()
+        if first in SYMBOLS:
+            return self.trim_symbol()
+        elif first == '"':
+            return self.trim_string()
+        else:
+            return self.trim_word()
+
+    def first_letter(self):
         self.text = self.text.lstrip()
-        word = self.text[0]
-        if word in SYMBOLS:
-            self.text = self.text[1:]
-            return word
+        return self.text[0]
 
-        if word == '"':
-            idx = 1
-            while self.text[idx] != '"':
-                idx += 1
-            word = self.text[:idx+1]
-            self.text = self.text[idx+1:]
-            return word
+    def trim_symbol(self):
+        return self.trim_return(1)
 
-        idx = 1
+    def trim_string(self):
+        close_quote = self.text.find('"', 1)
+        return self.trim_return(close_quote+1)
+
+    def trim_word(self):
+        idx = self.next_terminal_idx()
+        return self.trim_return(idx)
+
+    def next_terminal_idx(self):
+        idx = 0
         while not (self.text[idx] in SYMBOLS or self.text[idx] == ' '):
             idx += 1
-        word = self.text[:idx]
-        self.text = self.text[idx:]
-        return word
+        return idx
+
+    def trim_return(self, count):
+        letters = self.text[:count]
+        self.text = self.text[count:]
+        return letters
