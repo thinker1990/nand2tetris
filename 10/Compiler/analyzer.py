@@ -1,92 +1,54 @@
-from terminal import *
+from token_store import TokenStore
 
 
 class Analyzer:
 
-    def __init__(self, tokens):
-        self.tokens = [*tokens]
+    def __init__(self, tokens: TokenStore):
+        self.tokens = tokens.clone()
 
     def parse_tree(self):
         return self.parse_class()
 
     def parse_class(self):
-        keyword = self.pop_head(TOKEN_TYPE.KEYWORD)
+        keyword = self.tokens.pop_keyword()
         if keyword != 'class':
             raise 'keyword "class" expected'
         name = self.class_name()
+        self.tokens.pop_symbol()  # {
         variabls = self.class_vars()
         routines = self.subroutines()
+        self.tokens.pop_symbol()  # }
         return name, variabls, routines
 
     def class_name(self):
-        return self.pop_head(TOKEN_TYPE.IDENTIFIER)
-
-    def next_token(self, token_type):
-        t_type, token = self.tokens[0]
-        if t_type == token_type:
-            return token
-        else:
-            raise 'mismatched token type'
-
-    def pop_head(self, token_type):
-        token = self.next_token(token_type)
-        self.tokens.pop(0)
-        return token
+        return self.tokens.pop_identifier()
 
     def class_vars(self):
-        self.unpack_class()
-        keyword = self.next_token(TOKEN_TYPE.KEYWORD)
-        while keyword in ('static', 'field'):
+        token = self.tokens.peek()
+        while token in ('static', 'field'):
             yield self.class_var()
-            keyword = self.next_token(TOKEN_TYPE.KEYWORD)
+            token = self.tokens.peek()
 
-    def unpack_class(self):
-        self.pop_head(TOKEN_TYPE.SYMBOL)
-        self.tokens.pop()
+    def subroutines(self):
+        token = self.tokens.peek()
+        while token in ('constructor', 'function', 'method'):
+            yield self.subroutine()
+            token = self.tokens.peek()
 
     def class_var(self):
-        modifier = self.pop_head(TOKEN_TYPE.KEYWORD)
-        try:
-            v_type = self.pop_head(TOKEN_TYPE.KEYWORD)
-        except:
-            v_type = self.pop_head(TOKEN_TYPE.IDENTIFIER)
-        name = self.pop_head(TOKEN_TYPE.IDENTIFIER)
-        if self.pop_head(TOKEN_TYPE.SYMBOL) == ',':
-            self.tokens.
+        modifier = self.tokens.pop_keyword()
+        v_type = self.tokens.pop()  # keyword | identifier
+        name = self.tokens.pop_identifier()
+        if self.tokens.pop_symbol() == ',':
+            self.prepare_next_var(modifier, v_type)
         return modifier, v_type, name
 
-    def subroutine(tokens):
-        name = ''
-        params = self.parameters(tokens)
-        body = self.routine_body(tokens)
-        return name, params, body
+    def prepare_next_var(self, modifier, v_type):
+        if v_type in ('int', 'char', 'boolean'):
+            self.tokens.prepend_keyword(v_type)
+        else:
+            self.tokens.prepend_identifier(v_type)
+        self.tokens.prepend_keyword(modifier)
 
-    def parameters():
-        while True:
-            yield self.parameter()
-
-    def routine_body():
-        variables = self.local_vars()
-        statements = self.statements()
-        return variables, statements
-
-    def parameter():
-        p_type = None
-        p_name = ''
-        return p_type, p_name
-
-    def local_vars():
-        while True:
-            yield self.local_var()
-
-    def statements():
-        while True:
-            yield self.statement()
-
-    def local_var():
-        l_type = None
-        l_name = ''
-        return l_type, l_name
-
-    def statement():
+    def subroutine(self):
         pass

@@ -1,30 +1,20 @@
-from terminal import *
+from terminal import SYMBOLS
+from token_store import TokenStore
 
 
 class Tokenizer:
 
     def __init__(self, jack):
         self.text = jack.strip()
+        self.store = TokenStore()
 
     def tokens(self):
         while self.has_more():
-            yield self.next_token()
+            self.store.push(self.next_word())
+        return self.store
 
     def has_more(self):
         return self.text != ''
-
-    def next_token(self):
-        word = self.next_word()
-        if word in SYMBOLS:
-            return (TOKEN_TYPE.SYMBOL, word)
-        elif word in KEYWORDS:
-            return (TOKEN_TYPE.KEYWORD, word)
-        elif word.isnumeric():
-            return (TOKEN_TYPE.INT_CONST, int(word))
-        elif word.startswith('"') and word.endswith('"'):
-            return (TOKEN_TYPE.STRING_CONST, word.strip('"'))
-        else:
-            return (TOKEN_TYPE.IDENTIFIER, word)
 
     def next_word(self):
         first = self.first_letter()
@@ -40,23 +30,24 @@ class Tokenizer:
         return self.text[0]
 
     def trimmed_symbol(self):
-        return self.trim_return(1)
+        return self.trim_and_return(1)
 
     def trimmed_string(self):
         close_quote = self.text.find('"', 1)
-        return self.trim_return(close_quote+1)
+        return self.trim_and_return(close_quote+1)
 
     def trimmed_word(self):
         idx = self.next_terminal_idx()
-        return self.trim_return(idx)
+        return self.trim_and_return(idx)
 
     def next_terminal_idx(self):
         idx = 0
-        while not (self.text[idx] in SYMBOLS or self.text[idx] == ' '):
+        while not (self.text[idx] in SYMBOLS
+                   or self.text[idx].isspace()):
             idx += 1
         return idx
 
-    def trim_return(self, count):
+    def trim_and_return(self, count):
         letters = self.text[:count]
         self.text = self.text[count:]
         return letters
