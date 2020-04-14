@@ -13,16 +13,22 @@ class TokenStore:
         return copy
 
     def push(self, word):
+        self.tokens.append(self.token(word))
+
+    def prepend(self, word):
+        self.tokens.insert(0, self.token(word))
+
+    def token(self, word):
         if word in SYMBOLS:
-            self.tokens.append((T_TYPE.SYMBOL, word))
+            return T_TYPE.SYMBOL, word
         elif word in KEYWORDS:
-            self.tokens.append((T_TYPE.KEYWORD, word))
+            return T_TYPE.KEYWORD, word
         elif word.isnumeric():
-            self.tokens.append((T_TYPE.INT, int(word)))
+            return T_TYPE.INT, word
         elif word.startswith('"') and word.endswith('"'):
-            self.tokens.append((T_TYPE.STRING, word.strip('"')))
+            return T_TYPE.STRING, word
         else:
-            self.tokens.append((T_TYPE.IDENTIFIER, word))
+            return T_TYPE.IDENTIFIER, word
 
     def peek(self):
         _, token = self.tokens[0]
@@ -48,15 +54,6 @@ class TokenStore:
         else:
             self.tokens.insert(0, (t_type, token))
             raise f'{token_type} excepted.'
-
-    def prepend_keyword(self, token):
-        self.tokens.insert(0, (T_TYPE.KEYWORD, token))
-
-    def prepend_symbol(self, token):
-        self.tokens.insert(0, (T_TYPE.SYMBOL, token))
-
-    def prepend_identifier(self, token):
-        self.tokens.insert(0, (T_TYPE.IDENTIFIER, token))
 
 
 class T_TYPE(Enum):

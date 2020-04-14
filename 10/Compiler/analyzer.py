@@ -24,18 +24,50 @@ class Analyzer:
         return self.tokens.pop_identifier()
 
     def class_vars(self):
-        token = self.tokens.peek()
-        while token in ('static', 'field'):
-            yield self.class_var()
-            token = self.tokens.peek()
+        while self.tokens.peek() in ('static', 'field'):
+            yield self.variable()
 
     def subroutines(self):
-        token = self.tokens.peek()
-        while token in ('constructor', 'function', 'method'):
+        while self.tokens.peek() in ('constructor', 'function', 'method'):
             yield self.subroutine()
-            token = self.tokens.peek()
 
-    def class_var(self):
+    def subroutine(self):
+        modifier = self.tokens.pop_keyword()
+        r_type = self.tokens.pop()
+        name = self.tokens.pop_identifier()
+        self.tokens.pop_symbol()  # (
+        params = self.parameters()
+        self.tokens.pop_symbol()  # )
+        body = self.routine_body()
+        return modifier, r_type, name, params, body
+
+    def parameters(self):
+        while self.tokens.peek() != ')':
+            yield self.parameter()
+
+    def parameter(self):
+        if self.tokens.peek() == ',':
+            self.tokens.pop()
+        p_type = self.tokens.pop()
+        name = self.tokens.pop_identifier()
+        return p_type, name
+
+    def routine_body(self):
+        self.tokens.pop_symbol()  # {
+        variables = self.local_vars()
+        statements = self.statements()
+        self.tokens.pop_symbol()  # }
+        return variables, statements
+
+    def local_vars(self):
+        while self.tokens.peek() == 'var':
+            yield self.variable()
+
+    def statements(self):
+        while self.tokens.peek() != '}':
+            yield self.statement()
+
+    def variable(self):
         modifier = self.tokens.pop_keyword()
         v_type = self.tokens.pop()  # keyword | identifier
         name = self.tokens.pop_identifier()
@@ -44,11 +76,8 @@ class Analyzer:
         return modifier, v_type, name
 
     def prepare_next_var(self, modifier, v_type):
-        if v_type in ('int', 'char', 'boolean'):
-            self.tokens.prepend_keyword(v_type)
-        else:
-            self.tokens.prepend_identifier(v_type)
-        self.tokens.prepend_keyword(modifier)
+        self.tokens.prepend(v_type)
+        self.tokens.prepend(modifier)
 
-    def subroutine(self):
+    def statement(self):
         pass
