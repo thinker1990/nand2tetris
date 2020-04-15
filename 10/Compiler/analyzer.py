@@ -171,9 +171,15 @@ class Analyzer:
         return target, call
 
     def expression_list(self):
-        while not (self.tokens.peek(0) == ')' and
-                   self.tokens.peek(1) == ';'):
+        while not self.expression_end():
             yield self.expression()
 
     def expression(self):
         pass
+
+    def expression_end(self):
+        statement = self.tokens.peek() == ';'
+        cond = (self.tokens.peek(0) == ')' and
+                self.tokens.peek(1) == '{')
+        # TODO
+        return statement or cond
