@@ -64,7 +64,7 @@ class Analyzer:
             yield self.variable()
 
     def statements(self):
-        while self.tokens.peek() != '}':
+        while self.tokens.peek() in ('let', 'if', 'while', 'do', 'return'):
             yield self.statement()
 
     def variable(self):
@@ -80,4 +80,98 @@ class Analyzer:
         self.tokens.prepend(modifier)
 
     def statement(self):
+        key = self.tokens.peek()
+        if key == 'let':
+            return self.let_statement()
+        elif key == 'if':
+            return self.if_statement()
+        elif key == 'while':
+            return self.while_statement()
+        elif key == 'do':
+            return self.do_statement()
+        elif key == 'return':
+            return self.return_statement()
+        else:
+            raise 'Illegal statement.'
+
+    def let_statement(self):
+        s_type = self.tokens.pop_keyword()
+        variable = self.tokens.pop_identifier()
+        if self.tokens.peek() == '[':
+            self.tokens.pop_symbol()  # [
+            index = self.expression()
+            self.tokens.pop_symbol()  # ]
+        self.tokens.pop_symbol()
+        value = self.expression()
+        self.tokens.pop_symbol()
+        return s_type, variable, index, value
+
+    def if_statement(self):
+        s_type = self.tokens.pop_keyword()
+        self.tokens.pop_symbol()  # (
+        cond = self.expression()
+        self.tokens.pop_symbol()  # )
+        self.tokens.pop_symbol()  # {
+        consequent = self.statements()
+        self.tokens.pop_symbol()  # }
+        if self.tokens.peek() == 'else':
+            self.tokens.pop_keyword()
+            self.tokens.pop_symbol()  # {
+            alternative = self.statements()
+            self.tokens.pop_symbol()  # }
+        return s_type, cond, consequent, alternative
+
+    def while_statement(self):
+        s_type = self.tokens.pop_keyword()
+        self.tokens.pop_symbol()  # (
+        cond = self.expression()
+        self.tokens.pop_symbol()  # )
+        self.tokens.pop_symbol()  # {
+        consequent = self.statements()
+        self.tokens.pop_symbol()  # }
+        return s_type, cond, consequent
+
+    def do_statement(self):
+        s_type = self.tokens.pop_keyword()
+        r_call = self.routine_call()
+        self.tokens.pop_symbol()
+        return s_type, r_call
+
+    def return_statement(self):
+        s_type = self.tokens.pop_keyword()
+        if self.tokens.peek() == ';':
+            self.tokens.pop_symbol()
+            return s_type, None
+        else:
+            exp = self.expression()
+            self.tokens.pop_symbol()
+            return s_type, exp
+
+    def routine_call(self):
+        first = self.tokens.pop()
+        second = self.tokens.pop()
+        self.tokens.prepend(second)
+        self.tokens.prepend(first)
+        if second == '.':
+            return self.indirect_call()
+        else:
+            return self.direct_call()
+
+    def direct_call(self):
+        routine = self.tokens.pop_identifier()
+        self.tokens.pop_symbol()  # (
+        arguments = self.expression_list()
+        self.tokens.pop_symbol()  # )
+        return routine, arguments
+
+    def indirect_call(self):
+        target = self.tokens.pop_identifier()
+        self.tokens.pop_symbol()
+        call = self.direct_call()
+        return target, call
+
+    def expression_list(self):
+        pass
+
+    def expression(self):
         pass
