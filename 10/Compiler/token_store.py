@@ -13,25 +13,27 @@ class TokenStore:
         return copy
 
     def push(self, word):
-        self.tokens.append(self.token(word))
+        t_type = self.token_type(word)
+        self.tokens.append((t_type, word))
 
     def prepend(self, word):
-        self.tokens.insert(0, self.token(word))
+        t_type = self.token_type(word)
+        self.tokens.insert(0, (t_type, word))
 
-    def token(self, word):
+    def token_type(self, word):
         if word in SYMBOLS:
-            return T_TYPE.SYMBOL, word
+            return T_TYPE.SYMBOL
         elif word in KEYWORDS:
-            return T_TYPE.KEYWORD, word
+            return T_TYPE.KEYWORD
         elif word.isnumeric():
-            return T_TYPE.INT, word
+            return T_TYPE.INT
         elif word.startswith('"') and word.endswith('"'):
-            return T_TYPE.STRING, word
+            return T_TYPE.STRING
         else:
-            return T_TYPE.IDENTIFIER, word
+            return T_TYPE.IDENTIFIER
 
-    def peek(self):
-        _, token = self.tokens[0]
+    def peek(self, index=0):
+        _, token = self.tokens[index]
         return token
 
     def pop(self):

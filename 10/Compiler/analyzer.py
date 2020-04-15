@@ -171,7 +171,9 @@ class Analyzer:
         return target, call
 
     def expression_list(self):
-        pass
+        while not (self.tokens.peek(0) == ')' and
+                   self.tokens.peek(1) == ';'):
+            yield self.expression()
 
     def expression(self):
         pass
