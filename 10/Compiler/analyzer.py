@@ -175,11 +175,25 @@ class Analyzer:
             yield self.expression()
 
     def expression(self):
-        pass
+        first = self.term()
+        rest = self.op_terms()
+        return [first, rest]
 
     def expression_end(self):
         statement = self.tokens.peek() == ';'
         cond = (self.tokens.peek(0) == ')' and
                 self.tokens.peek(1) == '{')
-        # TODO
-        return statement or cond
+        array = (self.tokens.peek(0) == ']' and
+                 self.tokens.peek(1) == '=')
+        call = (self.tokens.peek(0) == ')' and
+                self.tokens.peek(1) == ';')
+        return statement or cond or array or call
+
+    def term(self):
+        pass
+
+    def op_terms(self):
+        while not self.expression_end():
+            op = self.tokens.pop_symbol()
+            term = self.term()
+            yield op, term
