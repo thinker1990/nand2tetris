@@ -1,4 +1,5 @@
 from token_store import *
+from parse_tree import *
 
 
 class Analyzer:
@@ -18,18 +19,22 @@ class Analyzer:
         variabls = self.class_vars()
         routines = self.subroutines()
         self.tokens.pop_symbol()  # }
-        return name, variabls, routines
+        return JackClass(name, variabls, routines)
 
     def class_name(self):
         return self.tokens.pop_identifier()
 
     def class_vars(self):
         while self.tokens.peek() in ('static', 'field'):
-            yield self.variable()
+            yield self.class_var()
 
     def subroutines(self):
         while self.tokens.peek() in ('constructor', 'function', 'method'):
             yield self.subroutine()
+
+    def class_var(self):
+        modifier, v_type, name = self.variable()
+        return ClassVariable(modifier, v_type, name)
 
     def subroutine(self):
         modifier = self.tokens.pop_keyword()
@@ -39,33 +44,37 @@ class Analyzer:
         params = self.parameters()
         self.tokens.pop_symbol()  # )
         body = self.routine_body()
-        return modifier, r_type, name, params, body
+        return Subroutine(modifier, r_type, name, params, body)
 
     def parameters(self):
         while self.tokens.peek() != ')':
             yield self.parameter()
-
-    def parameter(self):
-        if self.tokens.peek() == ',':
-            self.tokens.pop()
-        p_type = self.tokens.pop()
-        name = self.tokens.pop_identifier()
-        return p_type, name
 
     def routine_body(self):
         self.tokens.pop_symbol()  # {
         variables = self.local_vars()
         statements = self.statements()
         self.tokens.pop_symbol()  # }
-        return variables, statements
+        return RoutineBody(variables, statements)
+
+    def parameter(self):
+        if self.tokens.peek() == ',':
+            self.tokens.pop()
+        p_type = self.tokens.pop()
+        name = self.tokens.pop_identifier()
+        return Parameter(p_type, name)
 
     def local_vars(self):
         while self.tokens.peek() == 'var':
-            yield self.variable()
+            yield self.local_var()
 
     def statements(self):
         while self.tokens.peek() in ('let', 'if', 'while', 'do', 'return'):
             yield self.statement()
+
+    def local_var(self):
+        _, v_type, name = self.variable()
+        return LocalVariable(v_type, name)
 
     def variable(self):
         modifier = self.tokens.pop_keyword()
@@ -78,6 +87,8 @@ class Analyzer:
     def prepare_next_var(self, modifier, v_type):
         self.tokens.prepend(v_type)
         self.tokens.prepend(modifier)
+
+    # TODO
 
     def statement(self):
         key = self.tokens.peek()
