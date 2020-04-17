@@ -13,24 +13,12 @@ class TokenStore:
         return copy
 
     def push(self, word):
-        t_type = self.token_type(word)
+        t_type = token_type(word)
         self.tokens.append((t_type, word))
 
     def prepend(self, word):
-        t_type = self.token_type(word)
+        t_type = token_type(word)
         self.tokens.insert(0, (t_type, word))
-
-    def token_type(self, word):
-        if word in SYMBOLS:
-            return T_TYPE.SYMBOL
-        elif word in KEYWORDS:
-            return T_TYPE.KEYWORD
-        elif word.isnumeric():
-            return T_TYPE.INT
-        elif word.startswith('"') and word.endswith('"'):
-            return T_TYPE.STRING
-        else:
-            return T_TYPE.IDENTIFIER
 
     def peek(self, index=0):
         _, token = self.tokens[index]
@@ -49,6 +37,14 @@ class TokenStore:
     def pop_identifier(self):
         return self.pop_token(T_TYPE.IDENTIFIER)
 
+    def pop_int(self):
+        num = self.pop_token(T_TYPE.INT)
+        return int(num)
+
+    def pop_string(self):
+        string = self.pop_token(T_TYPE.STRING)
+        return string.strip('"')
+
     def pop_token(self, token_type):
         t_type, token = self.tokens.pop(0)
         if t_type == token_type:
@@ -64,3 +60,16 @@ class T_TYPE(Enum):
     IDENTIFIER = 2
     INT = 3
     STRING = 4
+
+
+def token_type(word):
+    if word in SYMBOLS:
+        return T_TYPE.SYMBOL
+    elif word in KEYWORDS:
+        return T_TYPE.KEYWORD
+    elif word.isnumeric():
+        return T_TYPE.INT
+    elif word.startswith('"') and word.endswith('"'):
+        return T_TYPE.STRING
+    else:
+        return T_TYPE.IDENTIFIER

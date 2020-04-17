@@ -1,4 +1,4 @@
-from token_store import TokenStore
+from token_store import *
 
 
 class Analyzer:
@@ -177,7 +177,7 @@ class Analyzer:
     def expression(self):
         first = self.term()
         rest = self.op_terms()
-        return [first, rest]
+        return [first] + [*rest]
 
     def expression_end(self):
         statement = self.tokens.peek() == ';'
@@ -189,11 +189,64 @@ class Analyzer:
                 self.tokens.peek(1) == ';')
         return statement or cond or array or call
 
-    def term(self):
-        pass
-
     def op_terms(self):
         while not self.expression_end():
             op = self.tokens.pop_symbol()
             term = self.term()
             yield op, term
+
+    def term(self):
+        first = self.tokens.peek()
+        if token_type(first) == T_TYPE.INT:
+            return self.int_const()
+        elif token_type(first) == T_TYPE.STRING:
+            return self.str_const()
+        elif token_type(first) == T_TYPE.KEYWORD:
+            return self.keyword()
+        elif first == '(':
+            return self.sub_exp()
+        elif first in ('-', '~'):
+            return self.unary_term()
+        elif token_type(first) == T_TYPE.IDENTIFIER:
+            return self.complex_term()
+        else:
+            raise f'Illegal term start with: {first}.'
+
+    def int_const(self):
+        return 'integer', self.tokens.pop_int()
+
+    def str_const(self):
+        return 'string', self.tokens.pop_string()
+
+    def keyword(self):
+        return 'keyword', self.tokens.pop_keyword()
+
+    def sub_exp(self):
+        self.tokens.pop_symbol()  # (
+        exp = self.expression()
+        self.tokens.pop_symbol()  # )
+        return 'expression', exp
+
+    def unary_term(self):
+        op = self.tokens.pop_symbol()
+        term = self.term()
+        return 'unary_term', (op, term)
+
+    def complex_term(self):
+        op = self.tokens.peek(1)
+        if op == '[':
+            return self.array_entry()
+        elif op in ('(', '.'):
+            return self.routine_call()
+        else:
+            return self.var_name()
+
+    def var_name(self):
+        return 'var_name', self.tokens.pop_identifier()
+
+    def array_entry(self):
+        array = self.tokens.pop_identifier()
+        self.tokens.pop_symbol()  # [
+        index = self.expression()
+        self.tokens.pop_symbol()  # ]
+        return 'array_entry', (array, index)
