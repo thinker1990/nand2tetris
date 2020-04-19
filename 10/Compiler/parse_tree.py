@@ -97,24 +97,174 @@ class LocalVariable:
 
 
 class LetStatement:
-    pass
+
+    def __init__(self, target, value):
+        self._target = target
+        self._value = value
+
+    def target(self):
+        return self._target
+
+    def value(self):
+        return self._value
 
 
 class IfStatement:
-    pass
+
+    def __init__(self, condition, consequent, alternative):
+        self._cond = condition
+        self._consq = [*consequent]
+        self._alter = [*alternative]
+
+    def condition(self):
+        return self._cond
+
+    def consequent(self):
+        return self._consq
+
+    def alternative(self):
+        return self._alter
 
 
 class WhileStatement:
-    pass
+
+    def __init__(self, test, loop):
+        self._test = test
+        self._loop = [*loop]
+
+    def test(self):
+        return self._test
+
+    def loop_body(self):
+        return self._loop
 
 
 class DoStatement:
-    pass
+
+    def __init__(self, routine_call):
+        self._call = routine_call
+
+    def routine_call(self):
+        return self._call
 
 
 class ReturnStatement:
-    pass
+
+    def __init__(self, value):
+        self._value = value
+
+    def value(self):
+        return self._value
 
 
 class Expression:
-    pass
+
+    def __init__(self, first, rest):
+        self._terms = [first] + Expression._flatten(rest)
+
+    def content(self):
+        return self._terms
+
+    @staticmethod
+    def _flatten(nest_list):
+        return [i for lst in nest_list for i in lst]
+
+
+class InClassCall:
+
+    def __init__(self, routine, arguments):
+        self._routine = routine
+        self._args = [*arguments]
+
+    def routine(self):
+        return self._routine
+
+    def arguments(self):
+        return self._args
+
+
+class ExClassCall:
+
+    def __init__(self, target, routine, arguments):
+        self._target = target
+        self._routine = routine
+        self._args = [*arguments]
+
+    def target(self):
+        return self._target
+
+    def routine(self):
+        return self._routine
+
+    def arguments(self):
+        return self._args
+
+
+class IntegerConstant:
+
+    def __init__(self, value):
+        if not isinstance(value, int):
+            raise 'Integer constant expected'
+        self._value = value
+
+    def value(self):
+        return self._value
+
+
+class StringConstant:
+
+    def __init__(self, value):
+        if not isinstance(value, str):
+            raise 'String constant expected'
+        self._value = value
+
+    def value(self):
+        return self._value
+
+
+class KeywordConstant:
+
+    def __init__(self, value):
+        if value not in ('true', 'false', 'null', 'this'):
+            raise f'Illegal keyword: {value}.'
+        self._value = value
+
+    def value(self):
+        return self._value
+
+
+class Variable:
+
+    def __init__(self, name):
+        self._name = name
+
+    def name(self):
+        return self._name
+
+
+class ArrayEntry:
+
+    def __init__(self, name, index):
+        self._name = name
+        self._index = index
+
+    def name(self):
+        return self._name
+
+    def index(self):
+        return self._index
+
+
+class UnaryTerm:
+
+    def __init__(self, operator, term):
+        if operator not in ('-', '~'):
+            raise f'Illegal unary operator: {operator}.'
+        self._op = operator
+        self._term = term
+
+    def operator(self):
+        return self._op
+
+    def term(self):
+        return self._term

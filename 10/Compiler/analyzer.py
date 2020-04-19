@@ -88,7 +88,7 @@ class Analyzer:
         self.tokens.prepend(v_type)
         self.tokens.prepend(modifier)
 
-    # TODO
+    # statement
 
     def statement(self):
         key = self.tokens.peek()
@@ -106,89 +106,105 @@ class Analyzer:
             raise 'Illegal statement.'
 
     def let_statement(self):
-        s_type = self.tokens.pop_keyword()
-        variable = self.tokens.pop_identifier()
-        if self.tokens.peek() == '[':
-            self.tokens.pop_symbol()  # [
-            index = self.expression()
-            self.tokens.pop_symbol()  # ]
+        self.tokens.pop_keyword()
+        target = self.let_target()
         self.tokens.pop_symbol()
         value = self.expression()
         self.tokens.pop_symbol()
-        return s_type, variable, index, value
+        return LetStatement(target, value)
+
+    def let_target(self):
+        if self.tokens.peek(1) == '[':
+            return self.array_entry()
+        else:
+            return self.var_name()
 
     def if_statement(self):
-        s_type = self.tokens.pop_keyword()
-        self.tokens.pop_symbol()  # (
-        cond = self.expression()
-        self.tokens.pop_symbol()  # )
-        self.tokens.pop_symbol()  # {
-        consequent = self.statements()
-        self.tokens.pop_symbol()  # }
+        self.tokens.pop_keyword()
+        cond = self.exp_in_parenthesis()
+        consequent = self.statements_in_braces()
+        alternative = self.if_alternative()
+        return IfStatement(cond, consequent, alternative)
+
+    def if_alternative(self):
         if self.tokens.peek() == 'else':
             self.tokens.pop_keyword()
-            self.tokens.pop_symbol()  # {
-            alternative = self.statements()
-            self.tokens.pop_symbol()  # }
-        return s_type, cond, consequent, alternative
+            return self.statements_in_braces()
+        else:
+            return []
 
     def while_statement(self):
-        s_type = self.tokens.pop_keyword()
-        self.tokens.pop_symbol()  # (
-        cond = self.expression()
-        self.tokens.pop_symbol()  # )
-        self.tokens.pop_symbol()  # {
-        consequent = self.statements()
-        self.tokens.pop_symbol()  # }
-        return s_type, cond, consequent
+        self.tokens.pop_keyword()
+        test = self.exp_in_parenthesis()
+        loop = self.statements_in_braces()
+        return WhileStatement(test, loop)
 
     def do_statement(self):
-        s_type = self.tokens.pop_keyword()
+        self.tokens.pop_keyword()
         r_call = self.routine_call()
         self.tokens.pop_symbol()
-        return s_type, r_call
+        return DoStatement(r_call)
 
     def return_statement(self):
-        s_type = self.tokens.pop_keyword()
+        self.tokens.pop_keyword()
         if self.tokens.peek() == ';':
-            self.tokens.pop_symbol()
-            return s_type, None
+            value = None
         else:
-            exp = self.expression()
-            self.tokens.pop_symbol()
-            return s_type, exp
+            value = self.expression()
+        self.tokens.pop_symbol()
+        return ReturnStatement(value)
 
     def routine_call(self):
-        first = self.tokens.pop()
-        second = self.tokens.pop()
-        self.tokens.prepend(second)
-        self.tokens.prepend(first)
-        if second == '.':
-            return self.indirect_call()
+        if self.tokens.peek(1) == '.':
+            return self.exclass_call()
         else:
-            return self.direct_call()
+            return self.inclass_call()
 
-    def direct_call(self):
+    def inclass_call(self):
+        routine, arguments = self.call()
+        return InClassCall(routine, arguments)
+
+    def exclass_call(self):
+        target = self.tokens.pop_identifier()
+        self.tokens.pop_symbol()
+        routine, arguments = self.call()
+        return ExClassCall(target, routine, arguments)
+
+    def call(self):
         routine = self.tokens.pop_identifier()
         self.tokens.pop_symbol()  # (
         arguments = self.expression_list()
         self.tokens.pop_symbol()  # )
         return routine, arguments
 
-    def indirect_call(self):
-        target = self.tokens.pop_identifier()
-        self.tokens.pop_symbol()
-        call = self.direct_call()
-        return target, call
-
     def expression_list(self):
         while not self.expression_end():
             yield self.expression()
 
+    def exp_in_parenthesis(self):
+        self.tokens.pop_symbol()  # (
+        exp = self.expression()
+        self.tokens.pop_symbol()  # )
+        return exp
+
+    def statements_in_braces(self):
+        self.tokens.pop_symbol()  # {
+        statements = self.statements()
+        self.tokens.pop_symbol()  # }
+        return statements
+
+    # expression
+
     def expression(self):
         first = self.term()
         rest = self.op_terms()
-        return [first] + [*rest]
+        return Expression(first, rest)
+
+    def op_terms(self):
+        while not self.expression_end():
+            op = self.tokens.pop_symbol()
+            term = self.term()
+            yield [op, term]
 
     def expression_end(self):
         statement = self.tokens.peek() == ';'
@@ -200,12 +216,6 @@ class Analyzer:
                 self.tokens.peek(1) == ';')
         return statement or cond or array or call
 
-    def op_terms(self):
-        while not self.expression_end():
-            op = self.tokens.pop_symbol()
-            term = self.term()
-            yield op, term
-
     def term(self):
         first = self.tokens.peek()
         if token_type(first) == T_TYPE.INT:
@@ -215,7 +225,7 @@ class Analyzer:
         elif token_type(first) == T_TYPE.KEYWORD:
             return self.keyword()
         elif first == '(':
-            return self.sub_exp()
+            return self.exp_in_parenthesis()
         elif first in ('-', '~'):
             return self.unary_term()
         elif token_type(first) == T_TYPE.IDENTIFIER:
@@ -224,24 +234,18 @@ class Analyzer:
             raise f'Illegal term start with: {first}.'
 
     def int_const(self):
-        return 'integer', self.tokens.pop_int()
+        return IntegerConstant(self.tokens.pop_int())
 
     def str_const(self):
-        return 'string', self.tokens.pop_string()
+        return StringConstant(self.tokens.pop_string())
 
     def keyword(self):
-        return 'keyword', self.tokens.pop_keyword()
-
-    def sub_exp(self):
-        self.tokens.pop_symbol()  # (
-        exp = self.expression()
-        self.tokens.pop_symbol()  # )
-        return 'expression', exp
+        return KeywordConstant(self.tokens.pop_keyword())
 
     def unary_term(self):
         op = self.tokens.pop_symbol()
         term = self.term()
-        return 'unary_term', (op, term)
+        return UnaryTerm(op, term)
 
     def complex_term(self):
         op = self.tokens.peek(1)
@@ -253,11 +257,11 @@ class Analyzer:
             return self.var_name()
 
     def var_name(self):
-        return 'var_name', self.tokens.pop_identifier()
+        return Variable(self.tokens.pop_identifier())
 
     def array_entry(self):
         array = self.tokens.pop_identifier()
         self.tokens.pop_symbol()  # [
         index = self.expression()
         self.tokens.pop_symbol()  # ]
-        return 'array_entry', (array, index)
+        return ArrayEntry(array, index)
