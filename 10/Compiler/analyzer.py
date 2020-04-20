@@ -13,7 +13,7 @@ class Analyzer:
     def parse_class(self):
         keyword = self.tokens.pop_keyword()
         if keyword != 'class':
-            raise 'keyword "class" expected'
+            raise Exception('keyword "class" expected')
         name = self.class_name()
         self.tokens.pop_symbol()  # {
         variabls = self.class_vars()
@@ -25,16 +25,20 @@ class Analyzer:
         return self.tokens.pop_identifier()
 
     def class_vars(self):
+        result = []
         while self.tokens.peek() in ('static', 'field'):
-            yield self.class_var()
+            result.append(self.class_var())
+        return result
 
     def subroutines(self):
+        result = []
         while self.tokens.peek() in ('constructor', 'function', 'method'):
-            yield self.subroutine()
+            result.append(self.subroutine())
+        return result
 
     def class_var(self):
-        modifier, v_type, name = self.variable()
-        return ClassVariable(modifier, v_type, name)
+        modifier, v_type, names = self.var_dec()
+        return ClassVariable(modifier, v_type, names)
 
     def subroutine(self):
         modifier = self.tokens.pop_keyword()
@@ -47,8 +51,10 @@ class Analyzer:
         return Subroutine(modifier, r_type, name, params, body)
 
     def parameters(self):
+        result = []
         while self.tokens.peek() != ')':
-            yield self.parameter()
+            result.append(self.parameter())
+        return result
 
     def routine_body(self):
         self.tokens.pop_symbol()  # {
@@ -58,35 +64,36 @@ class Analyzer:
         return RoutineBody(variables, statements)
 
     def parameter(self):
-        if self.tokens.peek() == ',':
-            self.tokens.pop()
         p_type = self.tokens.pop()
         name = self.tokens.pop_identifier()
+        if self.tokens.peek() == ',':
+            self.tokens.pop()
         return Parameter(p_type, name)
 
     def local_vars(self):
+        result = []
         while self.tokens.peek() == 'var':
-            yield self.local_var()
+            result.append(self.local_var())
+        return result
 
     def statements(self):
+        result = []
         while self.tokens.peek() in ('let', 'if', 'while', 'do', 'return'):
-            yield self.statement()
+            result.append(self.statement())
+        return result
 
     def local_var(self):
-        _, v_type, name = self.variable()
-        return LocalVariable(v_type, name)
+        _, v_type, names = self.var_dec()
+        return LocalVariable(v_type, names)
 
-    def variable(self):
+    def var_dec(self):
         modifier = self.tokens.pop_keyword()
         v_type = self.tokens.pop()  # keyword | identifier
-        name = self.tokens.pop_identifier()
-        if self.tokens.pop_symbol() == ',':
-            self.prepare_next_var(modifier, v_type)
-        return modifier, v_type, name
+        names = [self.tokens.pop_identifier()]
+        while self.tokens.pop_symbol() != ';':
+            names.append(self.tokens.pop_identifier())
+        return modifier, v_type, names
 
-    def prepare_next_var(self, modifier, v_type):
-        self.tokens.prepend(v_type)
-        self.tokens.prepend(modifier)
 
     # statement
 
@@ -103,7 +110,7 @@ class Analyzer:
         elif key == 'return':
             return self.return_statement()
         else:
-            raise 'Illegal statement.'
+            raise Exception('Illegal statement.')
 
     def let_statement(self):
         self.tokens.pop_keyword()
@@ -173,13 +180,21 @@ class Analyzer:
     def call(self):
         routine = self.tokens.pop_identifier()
         self.tokens.pop_symbol()  # (
-        arguments = self.expression_list()
+        arguments = self.argument_list()
         self.tokens.pop_symbol()  # )
         return routine, arguments
 
-    def expression_list(self):
+    def argument_list(self):
+        result = []
         while not self.expression_end():
-            yield self.expression()
+            result.append(self.argument())
+        return result
+
+    def argument(self):
+        arg = self.expression()
+        if self.tokens.peek() == ',':
+            self.tokens.pop()
+        return arg
 
     def exp_in_parenthesis(self):
         self.tokens.pop_symbol()  # (
@@ -198,23 +213,20 @@ class Analyzer:
     def expression(self):
         first = self.term()
         rest = self.op_terms()
-        return Expression(first, rest)
+        return Expression([first] + rest)
 
     def op_terms(self):
+        result = []
         while not self.expression_end():
-            op = self.tokens.pop_symbol()
-            term = self.term()
-            yield [op, term]
+            result.append(self.operator())
+            result.append(self.term())
+        return result
 
     def expression_end(self):
-        statement = self.tokens.peek() == ';'
-        cond = (self.tokens.peek(0) == ')' and
-                self.tokens.peek(1) == '{')
-        array = (self.tokens.peek(0) == ']' and
-                 self.tokens.peek(1) == '=')
-        call = (self.tokens.peek(0) == ')' and
-                self.tokens.peek(1) == ';')
-        return statement or cond or array or call
+        return self.tokens.peek() in (')', ']', ';', ',')
+
+    def operator(self):
+        return Operator(self.tokens.pop_symbol())
 
     def term(self):
         first = self.tokens.peek()
@@ -231,7 +243,7 @@ class Analyzer:
         elif token_type(first) == T_TYPE.IDENTIFIER:
             return self.complex_term()
         else:
-            raise f'Illegal term start with: {first}.'
+            raise Exception(f'Illegal term start with: {first}.')
 
     def int_const(self):
         return IntegerConstant(self.tokens.pop_int())
