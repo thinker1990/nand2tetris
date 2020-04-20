@@ -37,8 +37,8 @@ class Analyzer:
         return result
 
     def class_var(self):
-        modifier, v_type, name = self.variable()
-        return ClassVariable(modifier, v_type, name)
+        modifier, v_type, names = self.var_dec()
+        return ClassVariable(modifier, v_type, names)
 
     def subroutine(self):
         modifier = self.tokens.pop_keyword()
@@ -83,20 +83,17 @@ class Analyzer:
         return result
 
     def local_var(self):
-        _, v_type, name = self.variable()
-        return LocalVariable(v_type, name)
+        _, v_type, names = self.var_dec()
+        return LocalVariable(v_type, names)
 
-    def variable(self):
+    def var_dec(self):
         modifier = self.tokens.pop_keyword()
         v_type = self.tokens.pop()  # keyword | identifier
-        name = self.tokens.pop_identifier()
-        if self.tokens.pop_symbol() == ',':
-            self.prepare_next_var(modifier, v_type)
-        return modifier, v_type, name
+        names = [self.tokens.pop_identifier()]
+        while self.tokens.pop_symbol() != ';':
+            names.append(self.tokens.pop_identifier())
+        return modifier, v_type, names
 
-    def prepare_next_var(self, modifier, v_type):
-        self.tokens.prepend(v_type)
-        self.tokens.prepend(modifier)
 
     # statement
 

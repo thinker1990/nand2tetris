@@ -17,10 +17,10 @@ class JackClass:
 
 class ClassVariable:
 
-    def __init__(self, modifier, v_type, name):
+    def __init__(self, modifier, v_type, names):
         self._modifier = modifier
         self._type = v_type
-        self._name = name
+        self._names = names
 
     def modifier(self):
         return self._modifier
@@ -28,8 +28,8 @@ class ClassVariable:
     def v_type(self):
         return self._type
 
-    def name(self):
-        return self._name
+    def names(self):
+        return self._names
 
 
 class Subroutine:
@@ -85,15 +85,15 @@ class RoutineBody:
 
 class LocalVariable:
 
-    def __init__(self, v_type, name):
+    def __init__(self, v_type, names):
         self._type = v_type
-        self._name = name
+        self._names = names
 
     def v_type(self):
         return self._type
 
-    def name(self):
-        return self._name
+    def names(self):
+        return self._names
 
 
 class LetStatement:

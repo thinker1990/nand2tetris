@@ -34,7 +34,7 @@ def f_class_var(variable: ClassVariable):
         '<classVarDec>',
         f'{keyword(variable.modifier())}',
         f'{f_var_type(variable.v_type())}',
-        f'{identifier(variable.name())}',
+        f'{f_var_names(variable.names())}',
         f'{symbol(";")}',
         '</classVarDec>'
     ]
@@ -65,7 +65,7 @@ def f_var_type(v_type):
 
 def f_parameters(params):
     plist = map(f_parameter, params)
-    combinator = f'{symbol(",")}\n'
+    combinator = f'\n{symbol(",")}\n'
     tags = [
         '<parameterList>',
         f'{assemble(plist, combinator)}',
@@ -83,10 +83,12 @@ def f_parameter(param: Parameter):
 
 def f_routine_body(body: RoutineBody):
     tags = [
+        '<subroutineBody>',
         f'{symbol("{")}',
         f'{f_local_vars(body.local_variables())}',
         f'{f_statements(body.statements())}',
-        f'{symbol("}")}'
+        f'{symbol("}")}',
+        '</subroutineBody>'
     ]
     return assemble(tags)
 
@@ -101,11 +103,21 @@ def f_local_var(variable: LocalVariable):
         '<varDec>',
         f'{keyword("var")}',
         f'{f_var_type(variable.v_type())}',
-        f'{identifier(variable.name())}',
+        f'{f_var_names(variable.names())}',
         f'{symbol(";")}',
         '</varDec>'
     ]
     return assemble(tags)
+
+
+def f_var_names(names):
+    nlist = map(f_var_name, names)
+    combinator = f'\n{symbol(",")}\n'
+    return assemble(nlist, combinator)
+
+
+def f_var_name(name):
+    return f'{identifier(name)}'
 
 
 def f_statements(statements):
@@ -149,9 +161,7 @@ def f_if(statement: IfStatement):
     tags = [
         '<ifStatement>',
         f'{keyword("if")}',
-        f'{symbol("(")}',
-        f'{f_expression(statement.condition())}',
-        f'{symbol(")")}',
+        f'{f_exp_in_parenthesis(statement.condition())}',
         f'{symbol("{")}',
         f'{f_statements(statement.consequent())}',
         f'{symbol("}")}',
@@ -165,9 +175,7 @@ def f_while(statement: WhileStatement):
     tags = [
         '<whileStatement>',
         f'{keyword("while")}',
-        f'{symbol("(")}',
-        f'{f_expression(statement.test())}',
-        f'{symbol(")")}',
+        f'{f_exp_in_parenthesis(statement.test())}',
         f'{symbol("{")}',
         f'{f_statements(statement.loop_body())}',
         f'{symbol("}")}',
@@ -250,7 +258,7 @@ def f_exclass_call(call: ExClassCall):
 
 def f_arguments(args):
     alist = map(f_expression, args)
-    combinator = f'{symbol(",")}\n'
+    combinator = f'\n{symbol(",")}\n'
     tags = [
         '<expressionList>',
         f'{assemble(alist, combinator)}',
@@ -277,7 +285,12 @@ def f_expression(exp: Expression):
     if not exp:
         return ''
     elist = map(f_op_term, exp.content())
-    return assemble(elist)
+    tags = [
+        '<expression>',
+        f'{assemble(elist)}',
+        '</expression>'
+    ]
+    return assemble(tags)
 
 
 def f_op_term(item):
@@ -312,7 +325,7 @@ def f_term(term):
         seg = f_unary(term)
     else:
         raise Exception('Illegal term type.')
-    return f'<term>\n {seg}\n </term>'
+    return f'<term>\n{seg}\n</term>'
 
 
 def f_int(term: IntegerConstant):
@@ -339,7 +352,7 @@ def f_unary(term: UnaryTerm):
 
 
 def symbol(token):
-    return f'<symbol> {token} </symbol>'
+    return f'<symbol> {encode(token)} </symbol>'
 
 
 def keyword(token):
@@ -351,4 +364,18 @@ def identifier(token):
 
 
 def assemble(parts, combinator='\n'):
+    parts = filter(lambda i: i, parts)
     return combinator.join(parts)
+
+
+def encode(symbol):
+    if symbol == '<':
+        return '&lt;'
+    elif symbol == '>':
+        return '&gt;'
+    elif symbol == '"':
+        return '&quot;'
+    elif symbol == '&':
+        return '&amp;'
+    else:
+        return symbol
