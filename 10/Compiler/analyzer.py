@@ -58,10 +58,10 @@ class Analyzer:
         return RoutineBody(variables, statements)
 
     def parameter(self):
-        if self.tokens.peek() == ',':
-            self.tokens.pop()
         p_type = self.tokens.pop()
         name = self.tokens.pop_identifier()
+        if self.tokens.peek() == ',':
+            self.tokens.pop()
         return Parameter(p_type, name)
 
     def local_vars(self):
@@ -173,13 +173,19 @@ class Analyzer:
     def call(self):
         routine = self.tokens.pop_identifier()
         self.tokens.pop_symbol()  # (
-        arguments = self.expression_list()
+        arguments = self.argument_list()
         self.tokens.pop_symbol()  # )
         return routine, arguments
 
-    def expression_list(self):
+    def argument_list(self):
         while not self.expression_end():
-            yield self.expression()
+            yield self.argument()
+
+    def argument(self):
+        arg = self.expression()
+        if self.tokens.peek() == ',':
+            self.tokens.pop()
+        return arg
 
     def exp_in_parenthesis(self):
         self.tokens.pop_symbol()  # (
@@ -207,14 +213,7 @@ class Analyzer:
             yield [op, term]
 
     def expression_end(self):
-        statement = self.tokens.peek() == ';'
-        cond = (self.tokens.peek(0) == ')' and
-                self.tokens.peek(1) == '{')
-        array = (self.tokens.peek(0) == ']' and
-                 self.tokens.peek(1) == '=')
-        call = (self.tokens.peek(0) == ')' and
-                self.tokens.peek(1) == ';')
-        return statement or cond or array or call
+        return self.tokens.peek() in (')', ']', ';', ',')
 
     def term(self):
         first = self.tokens.peek()
