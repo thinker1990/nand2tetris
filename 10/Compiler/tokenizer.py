@@ -42,12 +42,12 @@ class Tokenizer:
 
     def next_terminal_idx(self):
         idx = 0
-        while not (self.text[idx] in SYMBOLS
-                   or self.text[idx].isspace()):
+        while not (self.text[idx] in SYMBOLS or
+                   self.text[idx].isspace()):
             idx += 1
         return idx
 
     def trim_and_return(self, count):
-        letters = self.text[:count]
+        trimmed = self.text[:count]
         self.text = self.text[count:]
-        return letters
+        return trimmed

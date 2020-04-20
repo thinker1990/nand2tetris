@@ -6,17 +6,16 @@ def to_xml(parsed):
 
 
 def f_class(jack_class: JackClass):
-    tags = [
+    return merge(
         '<class>',
-        f'{keyword("class")}',
-        f'{identifier(jack_class.name())}',
-        f'{symbol("{")}',
-        f'{f_class_vars(jack_class.variables())}',
-        f'{f_routines(jack_class.routines())}',
-        f'{symbol("}")}',
+        keyword('class'),
+        identifier(jack_class.name()),
+        symbol('{'),
+        f_class_vars(jack_class.variables()),
+        f_routines(jack_class.routines()),
+        symbol('}'),
         '</class>'
-    ]
-    return assemble(tags)
+    )
 
 
 def f_class_vars(variables):
@@ -30,30 +29,28 @@ def f_routines(routines):
 
 
 def f_class_var(variable: ClassVariable):
-    tags = [
+    return merge(
         '<classVarDec>',
-        f'{keyword(variable.modifier())}',
-        f'{f_var_type(variable.v_type())}',
-        f'{f_var_names(variable.names())}',
-        f'{symbol(";")}',
+        keyword(variable.modifier()),
+        f_var_type(variable.v_type()),
+        f_var_names(variable.names()),
+        symbol(';'),
         '</classVarDec>'
-    ]
-    return assemble(tags)
+    )
 
 
 def f_routine(routine: Subroutine):
-    tags = [
+    return merge(
         '<subroutineDec>',
-        f'{keyword(routine.modifier())}',
-        f'{f_var_type(routine.return_type())}',
-        f'{identifier(routine.name())}',
-        f'{symbol("(")}',
-        f'{f_parameters(routine.parameters())}',
-        f'{symbol(")")}',
-        f'{f_routine_body(routine.body())}',
+        keyword(routine.modifier()),
+        f_var_type(routine.return_type()),
+        identifier(routine.name()),
+        symbol('('),
+        f_parameters(routine.parameters()),
+        symbol(')'),
+        f_routine_body(routine.body()),
         '</subroutineDec>'
-    ]
-    return assemble(tags)
+    )
 
 
 def f_var_type(v_type):
@@ -66,31 +63,29 @@ def f_var_type(v_type):
 def f_parameters(params):
     plist = map(f_parameter, params)
     combinator = f'\n{symbol(",")}\n'
-    tags = [
+    return merge(
         '<parameterList>',
-        f'{assemble(plist, combinator)}',
+        assemble(plist, combinator),
         '</parameterList>'
-    ]
-    return assemble(tags)
+    )
 
 
 def f_parameter(param: Parameter):
-    return (
-        f'{f_var_type(param.param_type())}\n' +
-        f'{identifier(param.name())}'
+    return merge(
+        f_var_type(param.param_type()),
+        identifier(param.name())
     )
 
 
 def f_routine_body(body: RoutineBody):
-    tags = [
+    return merge(
         '<subroutineBody>',
-        f'{symbol("{")}',
-        f'{f_local_vars(body.local_variables())}',
-        f'{f_statements(body.statements())}',
-        f'{symbol("}")}',
+        symbol('{'),
+        f_local_vars(body.local_variables()),
+        f_statements(body.statements()),
+        symbol('}'),
         '</subroutineBody>'
-    ]
-    return assemble(tags)
+    )
 
 
 def f_local_vars(variables):
@@ -99,32 +94,27 @@ def f_local_vars(variables):
 
 
 def f_local_var(variable: LocalVariable):
-    tags = [
+    return merge(
         '<varDec>',
-        f'{keyword("var")}',
-        f'{f_var_type(variable.v_type())}',
-        f'{f_var_names(variable.names())}',
-        f'{symbol(";")}',
+        keyword('var'),
+        f_var_type(variable.v_type()),
+        f_var_names(variable.names()),
+        symbol(';'),
         '</varDec>'
-    ]
-    return assemble(tags)
+    )
 
 
 def f_var_names(names):
-    nlist = map(f_var_name, names)
+    nlist = map(identifier, names)
     combinator = f'\n{symbol(",")}\n'
     return assemble(nlist, combinator)
 
 
-def f_var_name(name):
-    return f'{identifier(name)}'
-
-
 def f_statements(statements):
     slist = map(f_statement, statements)
-    return (
-        '<statements>\n' +
-        f'{assemble(slist)}\n' +
+    return merge(
+        '<statements>',
+        assemble(slist),
         '</statements>'
     )
 
@@ -145,65 +135,60 @@ def f_statement(statement):
 
 
 def f_let(statement: LetStatement):
-    tags = [
+    return merge(
         '<letStatement>',
-        f'{keyword("let")}',
-        f'{f_let_target(statement.target())}',
-        f'{symbol("=")}',
-        f'{f_expression(statement.value())}',
-        f'{symbol(";")}',
+        keyword('let'),
+        f_let_target(statement.target()),
+        symbol('='),
+        f_expression(statement.value()),
+        symbol(';'),
         '</letStatement>'
-    ]
-    return assemble(tags)
+    )
 
 
 def f_if(statement: IfStatement):
-    tags = [
+    return merge(
         '<ifStatement>',
-        f'{keyword("if")}',
-        f'{f_exp_in_parenthesis(statement.condition())}',
-        f'{symbol("{")}',
-        f'{f_statements(statement.consequent())}',
-        f'{symbol("}")}',
-        f'{f_if_else(statement.alternative())}',
+        keyword('if'),
+        f_exp_in_parenthesis(statement.condition()),
+        symbol('{'),
+        f_statements(statement.consequent()),
+        symbol('}'),
+        f_if_else(statement.alternative()),
         '</ifStatement>'
-    ]
-    return assemble(tags)
+    )
 
 
 def f_while(statement: WhileStatement):
-    tags = [
+    return merge(
         '<whileStatement>',
-        f'{keyword("while")}',
-        f'{f_exp_in_parenthesis(statement.test())}',
-        f'{symbol("{")}',
-        f'{f_statements(statement.loop_body())}',
-        f'{symbol("}")}',
+        keyword('while'),
+        f_exp_in_parenthesis(statement.test()),
+        symbol('{'),
+        f_statements(statement.loop_body()),
+        symbol('}'),
         '</whileStatement>'
-    ]
-    return assemble(tags)
+    )
 
 
 def f_do(statement: DoStatement):
-    tags = [
+    return merge(
         '<doStatement>',
-        f'{keyword("do")}',
-        f'{f_routine_call(statement.routine_call())}',
-        f'{symbol(";")}',
+        keyword('do'),
+        f_routine_call(statement.routine_call()),
+        symbol(';'),
         '</doStatement>'
-    ]
-    return assemble(tags)
+    )
 
 
 def f_return(statement: ReturnStatement):
-    tags = [
+    return merge(
         '<returnStatement>',
-        f'{keyword("return")}',
-        f'{f_expression(statement.value())}',
-        f'{symbol(";")}',
+        keyword('return'),
+        f_expression(statement.value()),
+        symbol(';'),
         '</returnStatement>'
-    ]
-    return assemble(tags)
+    )
 
 
 def f_let_target(target):
@@ -219,11 +204,11 @@ def f_if_else(statements):
     if not statements:
         return ''
     else:
-        return (
-            f'{keyword("else")}\n' +
-            f'{symbol("{")}\n' +
-            f'{f_statements(statements)}\n' +
-            f'{symbol("}")}'
+        return merge(
+            keyword('else'),
+            symbol('{'),
+            f_statements(statements),
+            symbol('}')
         )
 
 
@@ -235,62 +220,57 @@ def f_routine_call(call):
 
 
 def f_inclass_call(call: InClassCall):
-    tags = [
-        f'{identifier(call.routine())}',
-        f'{symbol("(")}',
-        f'{f_arguments(call.arguments())}',
-        f'{symbol(")")}'
-    ]
-    return assemble(tags)
+    return merge(
+        identifier(call.routine()),
+        symbol('('),
+        f_arguments(call.arguments()),
+        symbol(')')
+    )
 
 
 def f_exclass_call(call: ExClassCall):
-    tags = [
-        f'{identifier(call.target())}',
-        f'{symbol(".")}',
-        f'{identifier(call.routine())}',
-        f'{symbol("(")}',
-        f'{f_arguments(call.arguments())}',
-        f'{symbol(")")}'
-    ]
-    return assemble(tags)
+    return merge(
+        identifier(call.target()),
+        symbol('.'),
+        identifier(call.routine()),
+        symbol('('),
+        f_arguments(call.arguments()),
+        symbol(')')
+    )
 
 
 def f_arguments(args):
     alist = map(f_expression, args)
     combinator = f'\n{symbol(",")}\n'
-    tags = [
+    return merge(
         '<expressionList>',
-        f'{assemble(alist, combinator)}',
+        assemble(alist, combinator),
         '</expressionList>'
-    ]
-    return assemble(tags)
+    )
 
 
 def f_variable(variable: Variable):
-    return f'{identifier(variable.name())}'
+    return identifier(variable.name())
 
 
 def f_array_entry(entry: ArrayEntry):
-    tags = [
-        f'{identifier(entry.name())}',
-        f'{symbol("[")}',
-        f'{f_expression(entry.index())}',
-        f'{symbol("]")}'
-    ]
-    return assemble(tags)
+    return merge(
+        identifier(entry.name()),
+        symbol('['),
+        f_expression(entry.index()),
+        symbol(']')
+    )
 
 
 def f_expression(exp: Expression):
     if not exp:
         return ''
     elist = map(f_op_term, exp.content())
-    tags = [
+    return merge(
         '<expression>',
-        f'{assemble(elist)}',
+        assemble(elist),
         '</expression>'
-    ]
-    return assemble(tags)
+    )
 
 
 def f_op_term(item):
@@ -301,7 +281,7 @@ def f_op_term(item):
 
 
 def f_op(op: Operator):
-    return f'{symbol(op.value())}'
+    return symbol(op.value())
 
 
 def f_term(term):
@@ -310,7 +290,7 @@ def f_term(term):
     elif isinstance(term, StringConstant):
         seg = f_string(term)
     elif isinstance(term, KeywordConstant):
-        seg = f'{keyword(term.value())}'
+        seg = keyword(term.value())
     elif isinstance(term, Variable):
         seg = f_variable(term)
     elif isinstance(term, ArrayEntry):
@@ -337,17 +317,17 @@ def f_string(term: StringConstant):
 
 
 def f_exp_in_parenthesis(term: Expression):
-    return (
-        f'{symbol("(")}\n' +
-        f'{f_expression(term)}\n' +
-        f'{symbol(")")}'
+    return merge(
+        symbol('('),
+        f_expression(term),
+        symbol(')')
     )
 
 
 def f_unary(term: UnaryTerm):
-    return (
-        f'{symbol(term.operator())}\n' +
-        f'{f_term(term.term())}'
+    return merge(
+        symbol(term.operator()),
+        f_term(term.term())
     )
 
 
@@ -361,6 +341,10 @@ def keyword(token):
 
 def identifier(token):
     return f'<identifier> {token} </identifier>'
+
+
+def merge(*parts):
+    return assemble(parts)
 
 
 def assemble(parts, combinator='\n'):
