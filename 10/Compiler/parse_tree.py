@@ -2,8 +2,8 @@ class JackClass:
 
     def __init__(self, name, variables, routines):
         self._name = name
-        self._vars = [*variables]
-        self._routines = [*routines]
+        self._vars = variables
+        self._routines = routines
 
     def name(self):
         return self._name
@@ -38,7 +38,7 @@ class Subroutine:
         self._modifier = modifier
         self._type = r_type
         self._name = name
-        self._params = [*parameters]
+        self._params = parameters
         self._body = body
 
     def modifier(self):
@@ -73,8 +73,8 @@ class Parameter:
 class RoutineBody:
 
     def __init__(self, variables, statements):
-        self._vars = [*variables]
-        self._statements = [*statements]
+        self._vars = variables
+        self._statements = statements
 
     def local_variables(self):
         return self._vars
@@ -113,8 +113,8 @@ class IfStatement:
 
     def __init__(self, condition, consequent, alternative):
         self._cond = condition
-        self._consq = [*consequent]
-        self._alter = [*alternative]
+        self._consq = consequent
+        self._alter = alternative
 
     def condition(self):
         return self._cond
@@ -130,7 +130,7 @@ class WhileStatement:
 
     def __init__(self, test, loop):
         self._test = test
-        self._loop = [*loop]
+        self._loop = loop
 
     def test(self):
         return self._test
@@ -159,22 +159,29 @@ class ReturnStatement:
 
 class Expression:
 
-    def __init__(self, first, rest):
-        self._terms = [first] + Expression._flatten(rest)
+    def __init__(self, terms):
+        self._terms = terms
 
     def content(self):
         return self._terms
 
-    @staticmethod
-    def _flatten(nest_list):
-        return [i for lst in nest_list for i in lst]
+
+class Operator:
+
+    def __init__(self, op):
+        if op not in ('+', '-', '*', '/', '&', '|', '<', '>', '='):
+            raise f'Illegal operator: {op}.'
+        self._op = op
+
+    def value(self):
+        return self._op
 
 
 class InClassCall:
 
     def __init__(self, routine, arguments):
         self._routine = routine
-        self._args = [*arguments]
+        self._args = arguments
 
     def routine(self):
         return self._routine
@@ -188,7 +195,7 @@ class ExClassCall:
     def __init__(self, target, routine, arguments):
         self._target = target
         self._routine = routine
-        self._args = [*arguments]
+        self._args = arguments
 
     def target(self):
         return self._target
@@ -204,7 +211,7 @@ class IntegerConstant:
 
     def __init__(self, value):
         if not isinstance(value, int):
-            raise 'Integer constant expected'
+            raise Exception('Integer constant expected')
         self._value = value
 
     def value(self):
@@ -215,7 +222,7 @@ class StringConstant:
 
     def __init__(self, value):
         if not isinstance(value, str):
-            raise 'String constant expected'
+            raise Exception('String constant expected')
         self._value = value
 
     def value(self):

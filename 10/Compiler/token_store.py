@@ -51,7 +51,7 @@ class TokenStore:
             return token
         else:
             self.tokens.insert(0, (t_type, token))
-            raise f'{token_type} excepted.'
+            raise Exception(f'{token_type} excepted.')
 
 
 class T_TYPE(Enum):

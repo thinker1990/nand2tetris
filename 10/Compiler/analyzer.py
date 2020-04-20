@@ -13,7 +13,7 @@ class Analyzer:
     def parse_class(self):
         keyword = self.tokens.pop_keyword()
         if keyword != 'class':
-            raise 'keyword "class" expected'
+            raise Exception('keyword "class" expected')
         name = self.class_name()
         self.tokens.pop_symbol()  # {
         variabls = self.class_vars()
@@ -25,12 +25,16 @@ class Analyzer:
         return self.tokens.pop_identifier()
 
     def class_vars(self):
+        result = []
         while self.tokens.peek() in ('static', 'field'):
-            yield self.class_var()
+            result.append(self.class_var())
+        return result
 
     def subroutines(self):
+        result = []
         while self.tokens.peek() in ('constructor', 'function', 'method'):
-            yield self.subroutine()
+            result.append(self.subroutine())
+        return result
 
     def class_var(self):
         modifier, v_type, name = self.variable()
@@ -47,8 +51,10 @@ class Analyzer:
         return Subroutine(modifier, r_type, name, params, body)
 
     def parameters(self):
+        result = []
         while self.tokens.peek() != ')':
-            yield self.parameter()
+            result.append(self.parameter())
+        return result
 
     def routine_body(self):
         self.tokens.pop_symbol()  # {
@@ -65,12 +71,16 @@ class Analyzer:
         return Parameter(p_type, name)
 
     def local_vars(self):
+        result = []
         while self.tokens.peek() == 'var':
-            yield self.local_var()
+            result.append(self.local_var())
+        return result
 
     def statements(self):
+        result = []
         while self.tokens.peek() in ('let', 'if', 'while', 'do', 'return'):
-            yield self.statement()
+            result.append(self.statement())
+        return result
 
     def local_var(self):
         _, v_type, name = self.variable()
@@ -103,7 +113,7 @@ class Analyzer:
         elif key == 'return':
             return self.return_statement()
         else:
-            raise 'Illegal statement.'
+            raise Exception('Illegal statement.')
 
     def let_statement(self):
         self.tokens.pop_keyword()
@@ -178,8 +188,10 @@ class Analyzer:
         return routine, arguments
 
     def argument_list(self):
+        result = []
         while not self.expression_end():
-            yield self.argument()
+            result.append(self.argument())
+        return result
 
     def argument(self):
         arg = self.expression()
@@ -204,16 +216,20 @@ class Analyzer:
     def expression(self):
         first = self.term()
         rest = self.op_terms()
-        return Expression(first, rest)
+        return Expression([first] + rest)
 
     def op_terms(self):
+        result = []
         while not self.expression_end():
-            op = self.tokens.pop_symbol()
-            term = self.term()
-            yield [op, term]
+            result.append(self.operator())
+            result.append(self.term())
+        return result
 
     def expression_end(self):
         return self.tokens.peek() in (')', ']', ';', ',')
+
+    def operator(self):
+        return Operator(self.tokens.pop_symbol())
 
     def term(self):
         first = self.tokens.peek()
@@ -230,7 +246,7 @@ class Analyzer:
         elif token_type(first) == T_TYPE.IDENTIFIER:
             return self.complex_term()
         else:
-            raise f'Illegal term start with: {first}.'
+            raise Exception(f'Illegal term start with: {first}.')
 
     def int_const(self):
         return IntegerConstant(self.tokens.pop_int())
