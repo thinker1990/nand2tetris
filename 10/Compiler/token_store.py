@@ -16,10 +16,6 @@ class TokenStore:
         t_type = token_type(word)
         self.tokens.append((t_type, word))
 
-    def prepend(self, word):
-        t_type = token_type(word)
-        self.tokens.insert(0, (t_type, word))
-
     def peek(self, index=0):
         _, token = self.tokens[index]
         return token

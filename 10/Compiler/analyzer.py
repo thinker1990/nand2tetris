@@ -13,7 +13,7 @@ class Analyzer:
     def parse_class(self):
         keyword = self.tokens.pop_keyword()
         if keyword != 'class':
-            raise Exception('keyword "class" expected')
+            raise Exception('Jack class expected')
         name = self.class_name()
         self.tokens.pop_symbol()  # {
         variabls = self.class_vars()
@@ -93,7 +93,6 @@ class Analyzer:
         while self.tokens.pop_symbol() != ';':
             names.append(self.tokens.pop_identifier())
         return modifier, v_type, names
-
 
     # statement
 
