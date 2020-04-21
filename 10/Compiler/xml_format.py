@@ -19,13 +19,11 @@ def f_class(jack_class: JackClass):
 
 
 def f_class_vars(variables):
-    varis = map(f_class_var, variables)
-    return assemble(varis)
+    return s_join(map(f_class_var, variables))
 
 
 def f_routines(routines):
-    routs = map(f_routine, routines)
-    return assemble(routs)
+    return s_join(map(f_routine, routines))
 
 
 def f_class_var(variable: ClassVariable):
@@ -61,11 +59,9 @@ def f_var_type(v_type):
 
 
 def f_parameters(params):
-    plist = map(f_parameter, params)
-    combinator = f'\n{symbol(",")}\n'
     return merge(
         '<parameterList>',
-        assemble(plist, combinator),
+        comma_join(map(f_parameter, params)),
         '</parameterList>'
     )
 
@@ -89,8 +85,7 @@ def f_routine_body(body: RoutineBody):
 
 
 def f_local_vars(variables):
-    varis = map(f_local_var, variables)
-    return assemble(varis)
+    return s_join(map(f_local_var, variables))
 
 
 def f_local_var(variable: LocalVariable):
@@ -105,16 +100,13 @@ def f_local_var(variable: LocalVariable):
 
 
 def f_var_names(names):
-    nlist = map(identifier, names)
-    combinator = f'\n{symbol(",")}\n'
-    return assemble(nlist, combinator)
+    return comma_join(map(identifier, names))
 
 
 def f_statements(statements):
-    slist = map(f_statement, statements)
     return merge(
         '<statements>',
-        assemble(slist),
+        s_join(map(f_statement, statements)),
         '</statements>'
     )
 
@@ -185,10 +177,17 @@ def f_return(statement: ReturnStatement):
     return merge(
         '<returnStatement>',
         keyword('return'),
-        f_expression(statement.value()),
+        f_return_value(statement.value()),
         symbol(';'),
         '</returnStatement>'
     )
+
+
+def f_return_value(value):
+    if not value:
+        return ''
+    else:
+        return f_expression(value)
 
 
 def f_let_target(target):
@@ -240,11 +239,9 @@ def f_exclass_call(call: ExClassCall):
 
 
 def f_arguments(args):
-    alist = map(f_expression, args)
-    combinator = f'\n{symbol(",")}\n'
     return merge(
         '<expressionList>',
-        assemble(alist, combinator),
+        comma_join(map(f_expression, args)),
         '</expressionList>'
     )
 
@@ -263,12 +260,9 @@ def f_array_entry(entry: ArrayEntry):
 
 
 def f_expression(exp: Expression):
-    if not exp:
-        return ''
-    elist = map(f_op_term, exp.content())
     return merge(
         '<expression>',
-        assemble(elist),
+        s_join(map(f_op_term, exp.content())),
         '</expression>'
     )
 
@@ -344,12 +338,16 @@ def identifier(token):
 
 
 def merge(*parts):
-    return assemble(parts)
+    return s_join(parts)
 
 
-def assemble(parts, combinator='\n'):
-    parts = filter(lambda i: i, parts)
-    return combinator.join(parts)
+def comma_join(parts):
+    comma = f'\n{symbol(",")}\n'
+    return s_join(parts, comma)
+
+
+def s_join(parts, delimiter='\n'):
+    return delimiter.join([i for i in parts if i])
 
 
 def encode(symbol):
