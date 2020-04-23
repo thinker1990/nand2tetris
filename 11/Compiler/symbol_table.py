@@ -4,22 +4,22 @@ from parse_tree import *
 class SymbolTable:
 
     def __init__(self, parsed: JackClass):
-        self._parsed = parsed
+        self._class = parsed
 
     def class_symbols(self):
         symbols = ClassSymbols()
-        for dec in self._parsed.variables():
+        for dec in self._class.variables():
             for name in dec.names():
                 symbols.define(name, dec.v_type(), dec.modifier())
         return symbols
 
     def method_symbols(self):
         mapping = {}
-        for routine in self._parsed.routines():
-            mapping[routine.name()] = self.method_symbol(routine)
+        for r in self._class.routines():
+            mapping[r.name()] = self.single_method(r)
         return mapping
 
-    def method_symbol(self, routine):
+    def single_method(self, routine):
         symbols = MethodSymbols()
         for p in routine.parameters():
             symbols.define_parameter(p.name(), p.param_type())
