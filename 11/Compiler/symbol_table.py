@@ -1,3 +1,34 @@
+from parse_tree import *
+
+
+class SymbolTable:
+
+    def __init__(self, parsed: JackClass):
+        self._parsed = parsed
+
+    def class_symbols(self):
+        symbols = ClassSymbols()
+        for dec in self._parsed.variables():
+            for name in dec.names():
+                symbols.define(name, dec.v_type(), dec.modifier())
+        return symbols
+
+    def method_symbols(self):
+        mapping = {}
+        for routine in self._parsed.routines():
+            mapping[routine.name()] = self.method_symbol(routine)
+        return mapping
+
+    def method_symbol(self, routine):
+        symbols = MethodSymbols()
+        for p in routine.parameters():
+            symbols.define_parameter(p.name(), p.param_type())
+        for dec in routine.body().local_variables():
+            for name in dec.names():
+                symbols.define_local(name, dec.v_type())
+        return symbols
+
+
 class ClassSymbols:
 
     def __init__(self):
@@ -31,23 +62,21 @@ class MethodSymbols:
         self._param_idx = 0
         self._local_idx = 0
 
-    def define(self, name, s_type, kind):
-        if kind == 'parameter':
-            index = self._param_idx
-            self._param_idx += 1
-        else:
-            index = self._local_idx
-            self._local_idx += 1
-        self._table[name] = SymbolProperty(s_type, kind, index)
+    def define_parameter(self, name, s_type):
+        index = self._param_idx
+        self._param_idx += 1
+        self._table[name] = SymbolProperty(s_type, 'parameter', index)
+
+    def define_local(self, name, s_type):
+        index = self._local_idx
+        self._local_idx += 1
+        self._table[name] = SymbolProperty(s_type, 'var', index)
 
     def get(self, name):
         if name in self._table:
             return self._table[name]
         else:
             return None
-
-    def count(self):
-        return len(self._table)
 
 
 class SymbolProperty:
