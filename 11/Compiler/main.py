@@ -20,14 +20,14 @@ def source_jacks(path):
 
 
 def parse(jack):
-    xml = Compiler().parse(jack.read_text())
-    target_xml(jack).write_text(xml)
+    vm = Compiler().parse(jack.read_text())
+    target_vm(jack).write_text(vm)
 
 
-def target_xml(source_path):
+def target_vm(source_path):
     directory = source_path.parent
-    xml = f'{source_path.stem}_I.xml'
-    return directory.joinpath(xml)
+    vm = f'{source_path.stem}.vm'
+    return directory.joinpath(vm)
 
 
 if __name__ == '__main__':

@@ -4,22 +4,18 @@ from parse_tree import *
 class SymbolTable:
 
     def __init__(self, parsed: JackClass):
-        self._class = parsed
+        self._variables = parsed.variables()
+        self._routines = parsed.routines()
 
     def class_symbols(self):
         symbols = ClassSymbols()
-        for dec in self._class.variables():
+        for dec in self._variables:
             for name in dec.names():
                 symbols.define(name, dec.v_type(), dec.modifier())
         return symbols
 
-    def method_symbols(self):
-        mapping = {}
-        for r in self._class.routines():
-            mapping[r.name()] = self.single_method(r)
-        return mapping
-
-    def single_method(self, routine):
+    def method_symbols(self, name):
+        routine = next(r for r in self._routines() if r.name() == name)
         symbols = MethodSymbols()
         for p in routine.parameters():
             symbols.define_parameter(p.name(), p.param_type())
@@ -63,14 +59,12 @@ class MethodSymbols:
         self._local_idx = 0
 
     def define_parameter(self, name, s_type):
-        index = self._param_idx
+        self._table[name] = SymbolProperty(s_type, 'param', self._param_idx)
         self._param_idx += 1
-        self._table[name] = SymbolProperty(s_type, 'parameter', index)
 
     def define_local(self, name, s_type):
-        index = self._local_idx
+        self._table[name] = SymbolProperty(s_type, 'var', self._local_idx)
         self._local_idx += 1
-        self._table[name] = SymbolProperty(s_type, 'var', index)
 
     def get(self, name):
         if name in self._table:
