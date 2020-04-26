@@ -12,14 +12,19 @@ class CodeGenerator:
 
     def vm(self):
         parts = map(self.method_vm, self._routines)
-        return self.merge(parts)
+        return merge(parts)
 
     def method_vm(self, routine: Subroutine):
         mname = self.method_name(routine)
         count = self.argument_count(routine)
-        head = function_vm(mname, count)
-        body = map(self.statement_vm, routine.body().statements())
-        return self.merge([head] + [*body])
+        return merge(
+            function_dec_vm(mname, count),
+            self.statements_vm(routine.body().statements())
+        )
+
+    def statements_vm(self, statements):
+        slist = map(self.statement_vm, statements)
+        return merge(slist)
 
     def statement_vm(self, statement):
         if isinstance(statement, LetStatement):
@@ -36,18 +41,61 @@ class CodeGenerator:
             raise Exception('Illegal statement.')
 
     def let_vm(self, routine: LetStatement):
-        pass
+        return merge(
+            self.expression_vm(routine.value()),
+            self.assignment_vm(routine.target())
+        )
 
     def if_vm(self, routine: IfStatement):
-        pass
+        else_label = unique_label('ELSE')
+        done_label = unique_label('IF_DONE')
+        return merge(
+            self.neg_cond(routine.condition()),
+            if_goto_vm(else_label),
+            self.statements_vm(routine.consequent()),
+            goto_vm(done_label),
+            label_vm(else_label),
+            self.statements_vm(routine.alternative()),
+            label_vm(done_label)
+        )
 
     def while_vm(self, routine: WhileStatement):
-        pass
+        loop_label = unique_label('LOOP')
+        done_label = unique_label('LOOP_DONE')
+        return merge(
+            label_vm(loop_label),
+            self.neg_cond(routine.test()),
+            if_goto_vm(done_label),
+            self.statements_vm(routine.loop_body()),
+            goto_vm(loop_label),
+            label_vm(done_label)
+        )
 
     def do_vm(self, routine: DoStatement):
-        pass
+        return merge(
+            self.call_routine_vm(routine.routine_call()),
+            ignore_return_vm()
+        )
 
     def return_vm(self, routine: ReturnStatement):
+        if routine.value():
+            return self.expression_vm(routine.value())
+        else:
+            return return_void_vm()
+
+    def assignment_vm(self, target):
+        pass
+
+    def neg_cond(self, cond):
+        return merge(
+            self.expression_vm(cond),
+            operator_vm('neg')
+        )
+
+    def call_routine_vm(self, call):
+        pass
+
+    def expression_vm(self, exp):
         pass
 
     def method_name(self, routine: Subroutine):
@@ -58,6 +106,3 @@ class CodeGenerator:
             return 1 + len(routine.parameters())
         else:
             return len(routine.parameters())
-
-    def merge(self, parts):
-        return '\n'.join(parts)
