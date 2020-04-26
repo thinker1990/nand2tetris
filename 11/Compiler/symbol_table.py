@@ -18,7 +18,7 @@ class SymbolTable:
         routine = next(r for r in self._routines() if r.name() == name)
         symbols = MethodSymbols()
         for p in routine.parameters():
-            symbols.define_parameter(p.name(), p.param_type())
+            symbols.define_argument(p.name(), p.param_type())
         for dec in routine.body().local_variables():
             for name in dec.names():
                 symbols.define_local(name, dec.v_type())
@@ -55,16 +55,16 @@ class MethodSymbols:
 
     def __init__(self):
         self._table = {}
-        self._param_idx = 0
-        self._local_idx = 0
+        self._arg_idx = 0
+        self._var_idx = 0
 
-    def define_parameter(self, name, s_type):
-        self._table[name] = SymbolProperty(s_type, 'param', self._param_idx)
-        self._param_idx += 1
+    def define_argument(self, name, s_type):
+        self._table[name] = SymbolProperty(s_type, 'argument', self._arg_idx)
+        self._arg_idx += 1
 
     def define_local(self, name, s_type):
-        self._table[name] = SymbolProperty(s_type, 'var', self._local_idx)
-        self._local_idx += 1
+        self._table[name] = SymbolProperty(s_type, 'var', self._var_idx)
+        self._var_idx += 1
 
     def get(self, name):
         if name in self._table:

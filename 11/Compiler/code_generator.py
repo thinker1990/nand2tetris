@@ -8,10 +8,14 @@ class CodeGenerator:
     def __init__(self, parsed: JackClass, symbols: SymbolTable):
         self._cname = parsed.name()
         self._routines = parsed.routines()
-        self._csymbols = symbols.class_symbols()
+        self._symbols = symbols
+        self._cur_method = 'main'
 
     def vm(self):
-        parts = map(self.method_vm, self._routines)
+        parts = []
+        for routine in self._routines:
+            self._cur_method = routine.name()
+            parts.append(self.method_vm(routine))
         return merge(parts)
 
     def method_vm(self, routine: Subroutine):
@@ -84,7 +88,41 @@ class CodeGenerator:
             return return_void_vm()
 
     def assignment_vm(self, target):
+        if isinstance(target, Variable):
+            return self.assign_var(target)
+        else:
+            return self.assign_array(target)
+
+    def assign_var(self, target: Variable):
         pass
+
+    def assign_array(self, target: ArrayEntry):
+        pass
+
+    def destination(self, var_name):
+        symbols = self._symbols.method_symbols(self._cur_method)
+        prop = symbols.get(var_name)
+        if prop:
+            return self.seg_idx(prop)
+        symbols = self._symbols.class_symbols()
+        prop = symbols.get(var_name)
+        if prop:
+            return self.seg_idx(prop)
+        else:
+            raise Exception(f'{var_name} not defined.')
+
+    def seg_idx(self, prop: SymbolProperty):
+        kind, idx = prop.kind(), prop.index()
+        if kind == 'static':
+            return 'static', idx
+        elif kind == 'field':
+            return 'this', idx
+        elif kind == 'argument':
+            return 'argument', idx
+        elif kind == 'var':
+            return 'local', idx
+        else:
+            raise Exception(f'Illegal symbol kind {kind}')
 
     def neg_cond(self, cond):
         return merge(
