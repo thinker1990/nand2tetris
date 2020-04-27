@@ -5,6 +5,10 @@ def function_dec_vm(name, arg_count):
     return f'function {name} {arg_count}'
 
 
+def call_vm(method, narg):
+    return f'call {method} {narg}'
+
+
 def label_vm(symbol):
     return f'label {symbol}'
 
@@ -31,6 +35,10 @@ def return_void_vm():
 
 def ignore_return_vm():
     return pop_vm('temp', 0)
+
+
+def integer_vm(value):
+    return push_vm('constant', value)
 
 
 def push_vm(segment, index):

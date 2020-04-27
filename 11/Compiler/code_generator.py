@@ -19,7 +19,7 @@ class CodeGenerator:
         return merge(parts)
 
     def method_vm(self, routine: Subroutine):
-        mname = self.method_name(routine)
+        mname = self.method_name(routine.name())
         count = self.argument_count(routine)
         return merge(
             function_dec_vm(mname, count),
@@ -94,18 +94,21 @@ class CodeGenerator:
             return self.assign_array(target)
 
     def assign_var(self, target: Variable):
-        pass
+        seg, idx = self.destination(target.name())
+        return pop_vm(seg, idx)
 
     def assign_array(self, target: ArrayEntry):
-        pass
+        seg, idx = self.destination(target.name())
+        return merge(
+            push_vm(seg, idx),
+            self.expression_vm(target.index()),
+            operator_vm('add'),
+            pop_vm('pointer', 1),
+            pop_vm('that', 0)
+        )
 
     def destination(self, var_name):
-        symbols = self._symbols.method_symbols(self._cur_method)
-        prop = symbols.get(var_name)
-        if prop:
-            return self.seg_idx(prop)
-        symbols = self._symbols.class_symbols()
-        prop = symbols.get(var_name)
+        prop = self.find_var(var_name)
         if prop:
             return self.seg_idx(prop)
         else:
@@ -131,16 +134,91 @@ class CodeGenerator:
         )
 
     def call_routine_vm(self, call):
-        pass
+        if isinstance(call, InClassCall):
+            return self.inclass_call_vm(call)
+        else:
+            return self.exclass_call_vm(call)
 
-    def expression_vm(self, exp):
-        pass
+    def inclass_call_vm(self, call: InClassCall):
+        name = self.method_name(call.routine())
+        narg = len(call.arguments()) + 1
+        return merge(
+            push_vm('argument', 0),
+            map(self.expression_vm, call.arguments()),
+            call_vm(name, narg)
+        )
 
-    def method_name(self, routine: Subroutine):
-        return f'{self._cname}.{routine.name()}'
+    def exclass_call_vm(self, call: ExClassCall):
+        target = self.find_var(call.target())
+        if target:
+            name = self.method_name(call.routine(), target.s_type())
+            args = [call.target()] + call.arguments()
+        else:
+            name = self.method_name(call.routine(), call.target())
+            args = call.arguments()
+        return merge(
+            map(self.expression_vm, args),
+            call_vm(name, len(args))
+        )
+
+    def expression_vm(self, exp: Expression):
+        content = exp.content()
+        ops = [i for i in content if isinstance(i, Operator)]
+        terms = [i for i in content if not isinstance(i, Operator)]
+        return merge(
+            self.term_vm(terms[0]),
+            self.rest_terms_vm(terms[1:], ops)
+        )
+
+    def rest_terms_vm(self, terms, ops):
+        vm = []
+        for term, op in zip(terms, ops):
+            vm.append(self.term_vm(term))
+            vm.append(self.op_vm(op))
+        return merge(vm)
+
+    def term_vm(self, term):
+        if isinstance(term, IntegerConstant):
+            return integer_vm(term)
+        elif isinstance(term, StringConstant):
+            return self.string_vm(term)
+        elif isinstance(term, KeywordConstant):
+            return self.keyword_vm(term.value())
+        elif isinstance(term, Variable):
+            return self.variable_vm(term)
+        elif isinstance(term, ArrayEntry):
+            return self.array_entry_vm(term)
+        elif isinstance(term, InClassCall):
+            return self.inclass_call_vm(term)
+        elif isinstance(term, ExClassCall):
+            return self.exclass_call_vm(term)
+        elif isinstance(term, Expression):
+            return self.expression_vm(term)
+        elif isinstance(term, UnaryTerm):
+            return self.unary_vm(term)
+        else:
+            raise Exception('Illegal term type.')
+
+    def method_name(self, routine_name, class_name=None):
+        if class_name:
+            return f'{class_name}.{routine_name}'
+        else:
+            return f'{self._cname}.{routine_name}'
 
     def argument_count(self, routine: Subroutine):
         if routine.modifier() == 'method':
             return 1 + len(routine.parameters())
         else:
             return len(routine.parameters())
+
+    def find_var(self, name):
+        symbols = self._symbols.method_symbols(self._cur_method)
+        prop = symbols.get(name)
+        if prop:
+            return prop
+        symbols = self._symbols.class_symbols()
+        prop = symbols.get(name)
+        if prop:
+            return prop
+        else:
+            return None
