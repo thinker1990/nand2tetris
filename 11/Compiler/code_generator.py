@@ -7,9 +7,14 @@ class CodeGenerator:
 
     def __init__(self, parsed: JackClass, symbols: SymbolTable):
         self._cname = parsed.name()
+        self._size = self.class_size(parsed.variables())
         self._routines = parsed.routines()
         self._symbols = symbols
         self._cur_method = 'main'
+
+    def class_size(self, var_dec):
+        fields = [dec for dec in var_dec if dec.modifier() == 'field']
+        return sum([len(dec.names()) for dec in fields])
 
     def vm(self):
         parts = []
@@ -23,8 +28,18 @@ class CodeGenerator:
         count = self.argument_count(routine)
         return merge(
             function_dec_vm(mname, count),
+            self.constructor_alloc(routine.modifier()),
             self.statements_vm(routine.body().statements())
         )
+
+    def constructor_alloc(self, modifier):
+        if modifier == 'constructor':
+            return merge(
+                constant_vm(self._size),
+                call_vm('Memory.alloc', 1)
+            )
+        else:
+            return ''
 
     def statements_vm(self, statements):
         slist = map(self.statement_vm, statements)
@@ -174,20 +189,20 @@ class CodeGenerator:
         vm = []
         for term, op in zip(terms, ops):
             vm.append(self.term_vm(term))
-            vm.append(self.op_vm(op))
+            vm.append(self.op_vm(op.value()))
         return merge(vm)
 
     def term_vm(self, term):
         if isinstance(term, IntegerConstant):
-            return integer_vm(term)
+            return constant_vm(term.value())
         elif isinstance(term, StringConstant):
-            return self.string_vm(term)
+            return self.string_vm(term.value())
         elif isinstance(term, KeywordConstant):
             return self.keyword_vm(term.value())
         elif isinstance(term, Variable):
-            return self.variable_vm(term)
+            return self.variable_vm(term.name())
         elif isinstance(term, ArrayEntry):
-            return self.array_entry_vm(term)
+            return self.array_entry_vm(term.name(), term.index())
         elif isinstance(term, InClassCall):
             return self.inclass_call_vm(term)
         elif isinstance(term, ExClassCall):
@@ -195,9 +210,76 @@ class CodeGenerator:
         elif isinstance(term, Expression):
             return self.expression_vm(term)
         elif isinstance(term, UnaryTerm):
-            return self.unary_vm(term)
+            return self.unary_vm(term.operator(), term.term())
         else:
             raise Exception('Illegal term type.')
+
+    def string_vm(self, str_const):
+        return merge(
+            constant_vm(len(str_const)),
+            call_vm('String.new', 1),
+            map(self.append_char, str_const)
+        )
+
+    def append_char(self, char):
+        return merge(
+            constant_vm(ord(char)),
+            call_vm('String.appendChar', 1)
+        )
+
+    def keyword_vm(self, word):
+        if word in ('false', 'null'):
+            return false_vm()
+        elif word == 'true':
+            return true_vm()
+        else:
+            return this_vm()
+
+    def variable_vm(self, var):
+        seg, idx = self.destination(var)
+        return push_vm(seg, idx)
+
+    def array_entry_vm(self, name, index):
+        seg, idx = self.destination(name)
+        return merge(
+            push_vm(seg, idx),
+            self.expression_vm(index),
+            operator_vm('add'),
+            pop_vm('pointer', 1),
+            push_vm('that', 0)
+        )
+
+    def unary_vm(self, op, term):
+        return merge(
+            self.term_vm(term),
+            self.unary_op(op)
+        )
+
+    def op_vm(self, operator):
+        if operator == '+':
+            return operator_vm('add')
+        if operator == '-':
+            return operator_vm('sub')
+        if operator == '&':
+            return operator_vm('and')
+        if operator == '|':
+            return operator_vm('or')
+        if operator == '<':
+            return operator_vm('lt')
+        if operator == '>':
+            return operator_vm('gt')
+        if operator == '=':
+            return operator_vm('eq')
+        if operator == '*':
+            return call_vm('Math.multiply', 2)
+        if operator == '/':
+            return call_vm('Math.divide', 2)
+
+    def unary_op(self, operator):
+        if operator == '-':
+            return operator_vm('neg')
+        if operator == '~':
+            return operator_vm('not')
 
     def method_name(self, routine_name, class_name=None):
         if class_name:

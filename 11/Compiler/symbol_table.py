@@ -47,9 +47,6 @@ class ClassSymbols:
         else:
             return None
 
-    def count(self):
-        return len(self._table)
-
 
 class MethodSymbols:
 
