@@ -1,8 +1,8 @@
 from uuid import uuid4
 
 
-def function_dec_vm(name, narg):
-    return f'function {name} {narg}'
+def function_dec_vm(name, nvar):
+    return f'function {name} {nvar}'
 
 
 def call_vm(method, narg):
@@ -43,7 +43,7 @@ def constant_vm(value):
 
 def true_vm():
     return merge(
-        false_vm(),
+        constant_vm(1),
         operator_vm('neg')
     )
 
@@ -68,6 +68,6 @@ def operator_vm(op):
     return op
 
 
-def merge(self, *parts):
-    flatten = [i for sub in parts for i in sub]
-    return '\n'.join(flatten)
+def merge(*parts):
+    no_empty = [i for i in parts if i]
+    return '\n'.join(no_empty)

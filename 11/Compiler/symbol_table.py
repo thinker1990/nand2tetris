@@ -15,7 +15,7 @@ class SymbolTable:
         return symbols
 
     def method_symbols(self, name):
-        routine = next(r for r in self._routines() if r.name() == name)
+        routine = next(r for r in self._routines if r.name() == name)
         symbols = MethodSymbols()
         for p in routine.parameters():
             symbols.define_argument(p.name(), p.param_type())

@@ -21,29 +21,34 @@ class CodeGenerator:
         for routine in self._routines:
             self._cur_method = routine.name()
             parts.append(self.method_vm(routine))
-        return merge(parts)
+        return join_strings(parts)
 
     def method_vm(self, routine: Subroutine):
         mname = self.method_name(routine.name())
-        count = self.argument_count(routine)
+        count = self.local_count(routine)
         return merge(
             function_dec_vm(mname, count),
-            self.constructor_alloc(routine.modifier()),
+            self.implicit_method_vm(routine.modifier()),
             self.statements_vm(routine.body().statements())
         )
 
-    def constructor_alloc(self, modifier):
+    def implicit_method_vm(self, modifier):
         if modifier == 'constructor':
             return merge(
                 constant_vm(self._size),
-                call_vm('Memory.alloc', 1)
+                call_vm('Memory.alloc', 1),
+                pop_vm('pointer', 0)
+            )
+        elif modifier == 'method':
+            return merge(
+                push_vm('argument', 0),
+                pop_vm('pointer', 0)
             )
         else:
             return ''
 
     def statements_vm(self, statements):
-        slist = map(self.statement_vm, statements)
-        return merge(slist)
+        return join_map(self.statement_vm, statements)
 
     def statement_vm(self, statement):
         if isinstance(statement, LetStatement):
@@ -69,7 +74,7 @@ class CodeGenerator:
         else_label = unique_label('ELSE')
         done_label = unique_label('IF_DONE')
         return merge(
-            self.neg_cond(routine.condition()),
+            self.not_cond(routine.condition()),
             if_goto_vm(else_label),
             self.statements_vm(routine.consequent()),
             goto_vm(done_label),
@@ -83,7 +88,7 @@ class CodeGenerator:
         done_label = unique_label('LOOP_DONE')
         return merge(
             label_vm(loop_label),
-            self.neg_cond(routine.test()),
+            self.not_cond(routine.test()),
             if_goto_vm(done_label),
             self.statements_vm(routine.loop_body()),
             goto_vm(loop_label),
@@ -98,7 +103,10 @@ class CodeGenerator:
 
     def return_vm(self, routine: ReturnStatement):
         if routine.value():
-            return self.expression_vm(routine.value())
+            return merge(
+                self.expression_vm(routine.value()),
+                'return'
+            )
         else:
             return return_void_vm()
 
@@ -142,10 +150,10 @@ class CodeGenerator:
         else:
             raise Exception(f'Illegal symbol kind {kind}')
 
-    def neg_cond(self, cond):
+    def not_cond(self, cond):
         return merge(
             self.expression_vm(cond),
-            operator_vm('neg')
+            operator_vm('not')
         )
 
     def call_routine_vm(self, call):
@@ -158,8 +166,8 @@ class CodeGenerator:
         name = self.method_name(call.routine())
         narg = len(call.arguments()) + 1
         return merge(
-            push_vm('argument', 0),
-            map(self.expression_vm, call.arguments()),
+            push_vm('pointer', 0),
+            join_map(self.expression_vm, call.arguments()),
             call_vm(name, narg)
         )
 
@@ -167,14 +175,18 @@ class CodeGenerator:
         target = self.find_var(call.target())
         if target:
             name = self.method_name(call.routine(), target.s_type())
-            args = [call.target()] + call.arguments()
+            args = self.add_implicit_arg(call.target(), call.arguments())
         else:
             name = self.method_name(call.routine(), call.target())
             args = call.arguments()
         return merge(
-            map(self.expression_vm, args),
+            join_map(self.expression_vm, args),
             call_vm(name, len(args))
         )
+
+    def add_implicit_arg(self, name, arguments):
+        first = Expression([Variable(name)])
+        return [first] + arguments
 
     def expression_vm(self, exp: Expression):
         content = exp.content()
@@ -190,7 +202,7 @@ class CodeGenerator:
         for term, op in zip(terms, ops):
             vm.append(self.term_vm(term))
             vm.append(self.op_vm(op.value()))
-        return merge(vm)
+        return join_strings(vm)
 
     def term_vm(self, term):
         if isinstance(term, IntegerConstant):
@@ -218,7 +230,7 @@ class CodeGenerator:
         return merge(
             constant_vm(len(str_const)),
             call_vm('String.new', 1),
-            map(self.append_char, str_const)
+            join_map(self.append_char, str_const)
         )
 
     def append_char(self, char):
@@ -287,11 +299,9 @@ class CodeGenerator:
         else:
             return f'{self._cname}.{routine_name}'
 
-    def argument_count(self, routine: Subroutine):
-        if routine.modifier() == 'method':
-            return 1 + len(routine.parameters())
-        else:
-            return len(routine.parameters())
+    def local_count(self, routine: Subroutine):
+        decs = [dec for dec in routine.body().local_variables()]
+        return sum([len(dec.names()) for dec in decs])
 
     def find_var(self, name):
         symbols = self._symbols.method_symbols(self._cur_method)
@@ -304,3 +314,11 @@ class CodeGenerator:
             return prop
         else:
             return None
+
+
+def join_map(action, iterator):
+    return join_strings(map(action, iterator))
+
+
+def join_strings(parts):
+    return '\n'.join(parts)
