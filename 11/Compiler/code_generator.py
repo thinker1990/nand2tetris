@@ -236,7 +236,7 @@ class CodeGenerator:
     def append_char(self, char):
         return merge(
             constant_vm(ord(char)),
-            call_vm('String.appendChar', 1)
+            call_vm('String.appendChar', 2)
         )
 
     def keyword_vm(self, word):

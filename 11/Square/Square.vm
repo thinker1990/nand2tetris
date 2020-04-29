@@ -73,7 +73,7 @@ push constant 510
 lt
 and
 not
-if-goto ELSE_982500DB80
+if-goto ELSE_2C6F0F7B4E
 push pointer 0
 call Square.erase 1
 pop temp 0
@@ -84,9 +84,9 @@ pop this 2
 push pointer 0
 call Square.draw 1
 pop temp 0
-goto IF_DONE_D7E5185058
-label ELSE_982500DB80
-label IF_DONE_D7E5185058
+goto IF_DONE_869A6AB07B
+label ELSE_2C6F0F7B4E
+label IF_DONE_869A6AB07B
 push constant 0
 return
 function Square.decSize 0
@@ -96,7 +96,7 @@ push this 2
 push constant 2
 gt
 not
-if-goto ELSE_8AE0EF0ED5
+if-goto ELSE_3A624A694D
 push pointer 0
 call Square.erase 1
 pop temp 0
@@ -107,9 +107,9 @@ pop this 2
 push pointer 0
 call Square.draw 1
 pop temp 0
-goto IF_DONE_8BD232CB0E
-label ELSE_8AE0EF0ED5
-label IF_DONE_8BD232CB0E
+goto IF_DONE_DDF276DD36
+label ELSE_3A624A694D
+label IF_DONE_DDF276DD36
 push constant 0
 return
 function Square.moveUp 0
@@ -119,7 +119,7 @@ push this 1
 push constant 1
 gt
 not
-if-goto ELSE_202D3EC886
+if-goto ELSE_0469A9C0F4
 push constant 0
 call Screen.setColor 1
 pop temp 0
@@ -155,9 +155,9 @@ push constant 1
 add
 call Screen.drawRectangle 4
 pop temp 0
-goto IF_DONE_17E871603A
-label ELSE_202D3EC886
-label IF_DONE_17E871603A
+goto IF_DONE_4F7AE62478
+label ELSE_0469A9C0F4
+label IF_DONE_4F7AE62478
 push constant 0
 return
 function Square.moveDown 0
@@ -169,7 +169,7 @@ add
 push constant 254
 lt
 not
-if-goto ELSE_054654A579
+if-goto ELSE_6B3E8E3E54
 push constant 0
 call Screen.setColor 1
 pop temp 0
@@ -205,9 +205,9 @@ push this 2
 add
 call Screen.drawRectangle 4
 pop temp 0
-goto IF_DONE_3F922A6843
-label ELSE_054654A579
-label IF_DONE_3F922A6843
+goto IF_DONE_6707A755E9
+label ELSE_6B3E8E3E54
+label IF_DONE_6707A755E9
 push constant 0
 return
 function Square.moveLeft 0
@@ -217,7 +217,7 @@ push this 0
 push constant 1
 gt
 not
-if-goto ELSE_44DA332B7C
+if-goto ELSE_E6C641798A
 push constant 0
 call Screen.setColor 1
 pop temp 0
@@ -253,9 +253,9 @@ push this 2
 add
 call Screen.drawRectangle 4
 pop temp 0
-goto IF_DONE_469222627F
-label ELSE_44DA332B7C
-label IF_DONE_469222627F
+goto IF_DONE_E9EA8E6643
+label ELSE_E6C641798A
+label IF_DONE_E9EA8E6643
 push constant 0
 return
 function Square.moveRight 0
@@ -267,7 +267,7 @@ add
 push constant 510
 lt
 not
-if-goto ELSE_90ADC8E52E
+if-goto ELSE_F2A1713876
 push constant 0
 call Screen.setColor 1
 pop temp 0
@@ -303,8 +303,8 @@ push this 2
 add
 call Screen.drawRectangle 4
 pop temp 0
-goto IF_DONE_BC95FEC025
-label ELSE_90ADC8E52E
-label IF_DONE_BC95FEC025
+goto IF_DONE_8271676D7D
+label ELSE_F2A1713876
+label IF_DONE_8271676D7D
 push constant 0
 return
