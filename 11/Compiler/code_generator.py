@@ -12,7 +12,7 @@ class CodeGenerator:
 
     def vm(self):
         return merge(
-            map(self.routine_vm, self._class.routines())
+            lmap(self.routine_vm, self._class.routines())
         )
 
     def routine_vm(self, routine: Subroutine):
@@ -24,9 +24,10 @@ class CodeGenerator:
         )
 
     def routine_header_vm(self, routine: Subroutine):
-        name = self.method_name(routine.name())
-        nvar = self.variable_count(routine.body().local_variables())
-        return function_declaration_vm(name, nvar)
+        return method_declaration_vm(
+            method_name(routine.name(), self._class.name()),
+            self.variable_count(routine.body().local_variables())
+        )
 
     def routine_implied_vm(self, modifier):
         if modifier == 'constructor':
@@ -49,7 +50,7 @@ class CodeGenerator:
 
     def statements_vm(self, statements):
         return merge(
-            map(self.statement_vm, statements)
+            lmap(self.statement_vm, statements)
         )
 
     def statement_vm(self, statement):
@@ -110,9 +111,9 @@ class CodeGenerator:
 
     def call_routine_vm(self, call):
         if isinstance(call, InClassCall):
-            return inclass_call_vm(
-                self.method_name(call.routine()),
-                map(self.expression_vm, call.arguments())
+            return call_inclass_vm(
+                method_name(call.routine(), self._class.name()),
+                lmap(self.expression_vm, call.arguments())
             )
         else:
             return self.exclass_call_vm(call)
@@ -120,19 +121,16 @@ class CodeGenerator:
     def exclass_call_vm(self, call: ExClassCall):
         target = self.find_variable(call.target())
         if target:
-            name = self.method_name(call.routine(), target.s_type())
-            args = self.add_implicit_arg(call.target(), call.arguments())
+            return call_instance_vm(
+                self.var_property(call.target()),
+                method_name(call.routine(), target.s_type()),
+                lmap(self.expression_vm, call.arguments())
+            )
         else:
-            name = self.method_name(call.routine(), call.target())
-            args = call.arguments()
-        return routine_call(
-            name,
-            map(self.expression_vm, args)
-        )
-
-    def add_implicit_arg(self, name, arguments):
-        first = Expression([Variable(name)])
-        return [first] + arguments
+            return call_static_vm(
+                method_name(call.routine(), call.target()),
+                lmap(self.expression_vm, call.arguments())
+            )
 
     def expression_vm(self, exp: Expression):
         content = exp.content()
@@ -152,17 +150,11 @@ class CodeGenerator:
 
     def term_vm(self, term):
         if isinstance(term, IntegerConstant):
-            return integer_vm(
-                term.value()
-            )
+            return integer_vm(term.value())
         elif isinstance(term, StringConstant):
-            return string_vm(
-                term.value()
-            )
+            return string_vm(term.value())
         elif isinstance(term, KeywordConstant):
-            return keyword_vm(
-                term.value()
-            )
+            return keyword_vm(term.value())
         elif isinstance(term, Variable):
             return variable_vm(
                 self.var_property(term.name())
@@ -189,12 +181,6 @@ class CodeGenerator:
         else:
             raise Exception(f'{name} not defined.')
 
-    def method_name(self, routine_name, class_name=None):
-        if class_name:
-            return f'{class_name}.{routine_name}'
-        else:
-            return f'{self._class.name()}.{routine_name}'
-
     def find_variable(self, name):
         symbols = self._symbols.method_symbols(self._cur_method)
         v_property = symbols.get(name)
@@ -206,3 +192,7 @@ class CodeGenerator:
             return v_property
         else:
             return None
+
+
+def lmap(func, iterable):
+    return list(map(func, iterable))

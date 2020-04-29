@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 
-_ARG_TYPE_TO_SEG = {
+_ARG_KIND_TO_SEG = {
     'static': 'static',
     'field': 'this',
     'argument': 'argument',
@@ -16,8 +16,8 @@ _BIN_OP = {
     '<': 'lt',
     '>': 'gt',
     '=': 'eq',
-    '*': call_vm('Math.multiply', 2),
-    '/': call_vm('Math.divide', 2)
+    '*': 'call Math.multiply 2',
+    '/': 'call Math.divide 2'
 }
 
 _UNARY_OP = {
@@ -26,7 +26,11 @@ _UNARY_OP = {
 }
 
 
-def function_declaration_vm(name, nvar):
+def method_name(routine_name, class_name):
+    return f'{class_name}.{routine_name}'
+
+
+def method_declaration_vm(name, nvar):
     return f'function {name} {nvar}'
 
 
@@ -118,21 +122,28 @@ def assign_array_entry_vm(target, index):
     )
 
 
-def inclass_call_vm(method, arguments):
-    arg_list = list(arguments)
-    narg = len(arg_list) + 1
+def call_inclass_vm(method, arguments):
     return merge(
         push_vm('pointer', 0),
-        arg_list,
-        call_vm(method, narg)
+        call_method_vm(method, arguments, len(arguments) + 1)
     )
 
 
-def routine_call(method, arguments):
-    arg_list = list(arguments)
+def call_instance_vm(target, method, arguments):
     return merge(
-        arg_list,
-        call_vm(method, len(arg_list))
+        variable_vm(target),
+        call_method_vm(method, arguments, len(arguments) + 1)
+    )
+
+
+def call_static_vm(method, arguments):
+    return call_method_vm(method, arguments, len(arguments))
+
+
+def call_method_vm(method, arguments, narg):
+    return merge(
+        arguments,
+        call_vm(method, narg)
     )
 
 
@@ -156,7 +167,7 @@ def keyword_vm(word):
             constant_vm(1),
             'neg'
         )
-    else:
+    else:  # this
         return push_vm('pointer', 0)
 
 
@@ -183,6 +194,10 @@ def unary_vm(operator, term):
     )
 
 
+def ignore_return_vm():
+    return pop_vm('temp', 0)
+
+
 def append_char(char):
     return merge(
         constant_vm(ord(char)),
@@ -191,7 +206,15 @@ def append_char(char):
 
 
 def segment(kind):
-    return _ARG_TYPE_TO_SEG[kind]
+    return _ARG_KIND_TO_SEG[kind]
+
+
+def binary_op_vm(operator):
+    return _BIN_OP[operator]
+
+
+def unary_op_vm(operator):
+    return _UNARY_OP[operator]
 
 
 def call_vm(method, narg):
@@ -210,15 +233,6 @@ def if_goto_vm(label):
     return f'if-goto {label}'
 
 
-def unique_label(prefix='LABEL'):
-    uid = uuid4().hex.upper()
-    return f'{prefix}_{uid[:10]}'
-
-
-def ignore_return_vm():
-    return pop_vm('temp', 0)
-
-
 def constant_vm(value):
     return push_vm('constant', value)
 
@@ -229,14 +243,6 @@ def push_vm(segment, index):
 
 def pop_vm(segment, index):
     return f'pop {segment} {index}'
-
-
-def binary_op_vm(operator):
-    return _BIN_OP[operator]
-
-
-def unary_op_vm(operator):
-    return _UNARY_OP[operator]
 
 
 def merge(*parts):
@@ -253,3 +259,8 @@ def flatten(nest_list):
         else:
             result.extend(flatten(item))
     return result
+
+
+def unique_label(prefix='LABEL'):
+    uid = uuid4().hex.upper()
+    return f'{prefix}_{uid[:10]}'
