@@ -29,46 +29,46 @@ push this 1
 push constant 1
 eq
 not
-if-goto ELSE_2389FA2C1B
+if-goto ELSE_D18371C942
 push this 0
 call Square.moveUp 1
 pop temp 0
-goto IF_DONE_BAEB3F1598
-label ELSE_2389FA2C1B
-label IF_DONE_BAEB3F1598
+goto IF_DONE_E3F444F2FB
+label ELSE_D18371C942
+label IF_DONE_E3F444F2FB
 push this 1
 push constant 2
 eq
 not
-if-goto ELSE_3EB3AD31F7
+if-goto ELSE_B20B6BDC0C
 push this 0
 call Square.moveDown 1
 pop temp 0
-goto IF_DONE_30CA35BE12
-label ELSE_3EB3AD31F7
-label IF_DONE_30CA35BE12
+goto IF_DONE_42ABCB41A5
+label ELSE_B20B6BDC0C
+label IF_DONE_42ABCB41A5
 push this 1
 push constant 3
 eq
 not
-if-goto ELSE_4FF5E17E54
+if-goto ELSE_FE82FECD48
 push this 0
 call Square.moveLeft 1
 pop temp 0
-goto IF_DONE_CCF87C6AC4
-label ELSE_4FF5E17E54
-label IF_DONE_CCF87C6AC4
+goto IF_DONE_450B92A7C8
+label ELSE_FE82FECD48
+label IF_DONE_450B92A7C8
 push this 1
 push constant 4
 eq
 not
-if-goto ELSE_3FC011A0D7
+if-goto ELSE_AAFBAA456B
 push this 0
 call Square.moveRight 1
 pop temp 0
-goto IF_DONE_D09D1B24C7
-label ELSE_3FC011A0D7
-label IF_DONE_D09D1B24C7
+goto IF_DONE_7261063600
+label ELSE_AAFBAA456B
+label IF_DONE_7261063600
 push constant 5
 call Sys.wait 1
 pop temp 0
@@ -79,112 +79,112 @@ push argument 0
 pop pointer 0
 push constant 0
 pop local 1
-label LOOP_E8E0C5D5F8
+label LOOP_54E8BB73E4
 push local 1
 not
 not
-if-goto LOOP_DONE_FBACE0FA01
-label LOOP_06E4BE2BA9
+if-goto LOOP_DONE_2C63AA4595
+label LOOP_FD504D6950
 push local 0
 push constant 0
 eq
 not
-if-goto LOOP_DONE_98A6E21B82
+if-goto LOOP_DONE_0F474F18FF
 call Keyboard.keyPressed 0
 pop local 0
 push pointer 0
 call SquareGame.moveSquare 1
 pop temp 0
-goto LOOP_06E4BE2BA9
-label LOOP_DONE_98A6E21B82
+goto LOOP_FD504D6950
+label LOOP_DONE_0F474F18FF
 push local 0
 push constant 81
 eq
 not
-if-goto ELSE_5836D3C571
+if-goto ELSE_19C77EC4C9
 push constant 1
 neg
 pop local 1
-goto IF_DONE_780968926C
-label ELSE_5836D3C571
-label IF_DONE_780968926C
+goto IF_DONE_4A703C77CF
+label ELSE_19C77EC4C9
+label IF_DONE_4A703C77CF
 push local 0
 push constant 90
 eq
 not
-if-goto ELSE_9C0200C51C
+if-goto ELSE_71A973AED3
 push this 0
 call Square.decSize 1
 pop temp 0
-goto IF_DONE_BC704A6FDB
-label ELSE_9C0200C51C
-label IF_DONE_BC704A6FDB
+goto IF_DONE_89053F3B3F
+label ELSE_71A973AED3
+label IF_DONE_89053F3B3F
 push local 0
 push constant 88
 eq
 not
-if-goto ELSE_2F35F5693D
+if-goto ELSE_D93009FDDE
 push this 0
 call Square.incSize 1
 pop temp 0
-goto IF_DONE_CFB786C2FD
-label ELSE_2F35F5693D
-label IF_DONE_CFB786C2FD
+goto IF_DONE_820850E15F
+label ELSE_D93009FDDE
+label IF_DONE_820850E15F
 push local 0
 push constant 131
 eq
 not
-if-goto ELSE_1C9D2716F1
+if-goto ELSE_9B75E0F71A
 push constant 1
 pop this 1
-goto IF_DONE_24C4502CC4
-label ELSE_1C9D2716F1
-label IF_DONE_24C4502CC4
+goto IF_DONE_4086B3612C
+label ELSE_9B75E0F71A
+label IF_DONE_4086B3612C
 push local 0
 push constant 133
 eq
 not
-if-goto ELSE_5C19E936F8
+if-goto ELSE_5A73EA7C09
 push constant 2
 pop this 1
-goto IF_DONE_390A8139F4
-label ELSE_5C19E936F8
-label IF_DONE_390A8139F4
+goto IF_DONE_B6F44BEC3C
+label ELSE_5A73EA7C09
+label IF_DONE_B6F44BEC3C
 push local 0
 push constant 130
 eq
 not
-if-goto ELSE_83391665F9
+if-goto ELSE_8B5483BD8B
 push constant 3
 pop this 1
-goto IF_DONE_854D15362E
-label ELSE_83391665F9
-label IF_DONE_854D15362E
+goto IF_DONE_3A9822C618
+label ELSE_8B5483BD8B
+label IF_DONE_3A9822C618
 push local 0
 push constant 132
 eq
 not
-if-goto ELSE_4B51C9DD26
+if-goto ELSE_AF1B941957
 push constant 4
 pop this 1
-goto IF_DONE_F445D4D7DE
-label ELSE_4B51C9DD26
-label IF_DONE_F445D4D7DE
-label LOOP_8BE66964E6
+goto IF_DONE_615DCC7FE4
+label ELSE_AF1B941957
+label IF_DONE_615DCC7FE4
+label LOOP_A8C1612340
 push local 0
 push constant 0
 eq
 not
 not
-if-goto LOOP_DONE_FF7005B493
+if-goto LOOP_DONE_B65E2AF109
 call Keyboard.keyPressed 0
 pop local 0
 push pointer 0
 call SquareGame.moveSquare 1
 pop temp 0
-goto LOOP_8BE66964E6
-label LOOP_DONE_FF7005B493
-goto LOOP_E8E0C5D5F8
-label LOOP_DONE_FBACE0FA01
+goto LOOP_A8C1612340
+label LOOP_DONE_B65E2AF109
+goto LOOP_54E8BB73E4
+label LOOP_DONE_2C63AA4595
 push constant 0
 return

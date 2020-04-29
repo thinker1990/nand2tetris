@@ -16,7 +16,7 @@ class SymbolTable:
 
     def method_symbols(self, name):
         routine = next(r for r in self._routines if r.name() == name)
-        symbols = MethodSymbols()
+        symbols = MethodSymbols(routine)
         for p in routine.parameters():
             symbols.define_argument(p.name(), p.param_type())
         for dec in routine.body().local_variables():
@@ -50,10 +50,12 @@ class ClassSymbols:
 
 class MethodSymbols:
 
-    def __init__(self):
+    def __init__(self, routine):
         self._table = {}
         self._arg_idx = 0
         self._var_idx = 0
+        if routine.modifier() == 'method':
+            self._arg_idx = 1
 
     def define_argument(self, name, s_type):
         self._table[name] = SymbolProperty(s_type, 'argument', self._arg_idx)
