@@ -133,15 +133,15 @@ class CodeGenerator:
         terms = [i for i in content if not isinstance(i, Operator)]
         return merge(
             self.term_vm(terms[0]),
-            self.rest_terms_vm(terms[1:], ops)
+            lmap(self.op_term_vm, zip(ops, terms[1:]))
         )
 
-    def rest_terms_vm(self, terms, ops):
-        vm = []
-        for term, op in zip(terms, ops):
-            vm.append(self.term_vm(term))
-            vm.append(binary_op_vm(op.value()))
-        return merge(vm)
+    def op_term_vm(self, op_term):
+        op, term = op_term
+        return merge(
+            self.term_vm(term),
+            binary_op_vm(op.value())
+        )
 
     def term_vm(self, term):
         if isinstance(term, IntegerConstant):
@@ -171,4 +171,4 @@ class CodeGenerator:
 
 
 def lmap(func, iterable):
-    return list(map(func, iterable))
+    return *map(func, iterable)

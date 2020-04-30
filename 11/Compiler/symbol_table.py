@@ -58,15 +58,15 @@ class SymbolTable:
         else:  # field
             index = self._field_idx
             self._field_idx += 1
-        var_property = (dec.var_type(), dec.modifier(), index)
-        self._class_scope[dec.name()] = var_property
+        _property = (dec.var_type(), dec.modifier(), index)
+        self._class_scope[dec.name()] = _property
 
     def define_arg(self, arg: Parameter):
-        arg_property = (arg.param_type(), 'argument', self._arg_idx)
-        self._method_scope[arg.name()] = arg_property
+        _property = (arg.param_type(), 'argument', self._arg_idx)
+        self._method_scope[arg.name()] = _property
         self._arg_idx += 1
 
     def define_var(self, dec: VariableDec):
-        var_property = (dec.var_type(), 'var', self._var_idx)
-        self._method_scope[dec.name()] = var_property
+        _property = (dec.var_type(), 'var', self._var_idx)
+        self._method_scope[dec.name()] = _property
         self._var_idx += 1

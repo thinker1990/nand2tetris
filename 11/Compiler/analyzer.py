@@ -16,8 +16,8 @@ class Analyzer:
             raise Exception('Jack class expected')
         name = self.class_name()
         self.tokens.pop_symbol()  # {
-        variabls = self.to_single_decs(self.class_vars())
-        routines = list(self.subroutines())
+        variabls = *self.as_single_decs(self.class_vars())
+        routines = *self.subroutines()
         self.tokens.pop_symbol()  # }
         return JackClass(name, variabls, routines)
 
@@ -37,7 +37,7 @@ class Analyzer:
         rtype = self.tokens.pop()
         name = self.tokens.pop_identifier()
         self.tokens.pop_symbol()  # (
-        params = list(self.parameters())
+        params = *self.parameters()
         self.tokens.pop_symbol()  # )
         body = self.routine_body()
         return Subroutine(modifier, rtype, name, params, body)
@@ -48,8 +48,8 @@ class Analyzer:
 
     def routine_body(self):
         self.tokens.pop_symbol()  # {
-        variables = self.to_single_decs(self.local_vars())
-        statements = list(self.statements())
+        variables = *self.as_single_decs(self.local_vars())
+        statements = *self.statements()
         self.tokens.pop_symbol()  # }
         return RoutineBody(variables, statements)
 
@@ -76,12 +76,10 @@ class Analyzer:
             names.append(self.tokens.pop_identifier())
         return modifier, vtype, names
 
-    def to_single_decs(self, var_decs):
-        flattened = []
+    def as_single_decs(self, var_decs):
         for modifier, vtype, names in var_decs:
             for name in names:
-                flattened.append(VariableDec(modifier, vtype, name))
-        return flattened
+                yield VariableDec(modifier, vtype, name)
 
     # statement
 
@@ -168,7 +166,7 @@ class Analyzer:
     def call(self):
         routine = self.tokens.pop_identifier()
         self.tokens.pop_symbol()  # (
-        arguments = list(self.argument_list())
+        arguments = *self.argument_list()
         self.tokens.pop_symbol()  # )
         return routine, arguments
 
@@ -190,7 +188,7 @@ class Analyzer:
 
     def statements_in_braces(self):
         self.tokens.pop_symbol()  # {
-        statements = list(self.statements())
+        statements = *self.statements()
         self.tokens.pop_symbol()  # }
         return statements
 
@@ -198,7 +196,7 @@ class Analyzer:
 
     def expression(self):
         first = self.term()
-        rest = list(self.op_terms())
+        rest = *self.op_terms()
         return Expression([first] + rest)
 
     def op_terms(self):
