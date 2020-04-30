@@ -16,8 +16,8 @@ class Analyzer:
             raise Exception('Jack class expected')
         name = self.class_name()
         self.tokens.pop_symbol()  # {
-        variabls = self.class_vars()
-        routines = self.subroutines()
+        variabls = self.to_single_decs(self.class_vars())
+        routines = list(self.subroutines())
         self.tokens.pop_symbol()  # }
         return JackClass(name, variabls, routines)
 
@@ -25,74 +25,63 @@ class Analyzer:
         return self.tokens.pop_identifier()
 
     def class_vars(self):
-        result = []
         while self.tokens.peek() in ('static', 'field'):
-            result.append(self.class_var())
-        return result
+            yield self.var_dec()
 
     def subroutines(self):
-        result = []
         while self.tokens.peek() in ('constructor', 'function', 'method'):
-            result.append(self.subroutine())
-        return result
-
-    def class_var(self):
-        modifier, v_type, names = self.var_dec()
-        return ClassVariable(modifier, v_type, names)
+            yield self.subroutine()
 
     def subroutine(self):
         modifier = self.tokens.pop_keyword()
-        r_type = self.tokens.pop()
+        rtype = self.tokens.pop()
         name = self.tokens.pop_identifier()
         self.tokens.pop_symbol()  # (
-        params = self.parameters()
+        params = list(self.parameters())
         self.tokens.pop_symbol()  # )
         body = self.routine_body()
-        return Subroutine(modifier, r_type, name, params, body)
+        return Subroutine(modifier, rtype, name, params, body)
 
     def parameters(self):
-        result = []
         while self.tokens.peek() != ')':
-            result.append(self.parameter())
-        return result
+            yield self.parameter()
 
     def routine_body(self):
         self.tokens.pop_symbol()  # {
-        variables = self.local_vars()
-        statements = self.statements()
+        variables = self.to_single_decs(self.local_vars())
+        statements = list(self.statements())
         self.tokens.pop_symbol()  # }
         return RoutineBody(variables, statements)
 
     def parameter(self):
-        p_type = self.tokens.pop()
+        ptype = self.tokens.pop()
         name = self.tokens.pop_identifier()
         if self.tokens.peek() == ',':
             self.tokens.pop()
-        return Parameter(p_type, name)
+        return Parameter(ptype, name)
 
     def local_vars(self):
-        result = []
         while self.tokens.peek() == 'var':
-            result.append(self.local_var())
-        return result
+            yield self.var_dec()
 
     def statements(self):
-        result = []
         while self.tokens.peek() in ('let', 'if', 'while', 'do', 'return'):
-            result.append(self.statement())
-        return result
-
-    def local_var(self):
-        _, v_type, names = self.var_dec()
-        return LocalVariable(v_type, names)
+            yield self.statement()
 
     def var_dec(self):
         modifier = self.tokens.pop_keyword()
-        v_type = self.tokens.pop()  # keyword | identifier
+        vtype = self.tokens.pop()  # keyword | identifier
         names = [self.tokens.pop_identifier()]
         while self.tokens.pop_symbol() != ';':
             names.append(self.tokens.pop_identifier())
-        return modifier, v_type, names
+        return modifier, vtype, names
+
+    def to_single_decs(self, var_decs):
+        flattened = []
+        for modifier, vtype, names in var_decs:
+            for name in names:
+                flattened.append(VariableDec(modifier, vtype, name))
+        return flattened
 
     # statement
 
@@ -179,15 +168,13 @@ class Analyzer:
     def call(self):
         routine = self.tokens.pop_identifier()
         self.tokens.pop_symbol()  # (
-        arguments = self.argument_list()
+        arguments = list(self.argument_list())
         self.tokens.pop_symbol()  # )
         return routine, arguments
 
     def argument_list(self):
-        result = []
         while not self.expression_end():
-            result.append(self.argument())
-        return result
+            yield self.argument()
 
     def argument(self):
         arg = self.expression()
@@ -203,7 +190,7 @@ class Analyzer:
 
     def statements_in_braces(self):
         self.tokens.pop_symbol()  # {
-        statements = self.statements()
+        statements = list(self.statements())
         self.tokens.pop_symbol()  # }
         return statements
 
@@ -211,15 +198,13 @@ class Analyzer:
 
     def expression(self):
         first = self.term()
-        rest = self.op_terms()
+        rest = list(self.op_terms())
         return Expression([first] + rest)
 
     def op_terms(self):
-        result = []
         while not self.expression_end():
-            result.append(self.operator())
-            result.append(self.term())
-        return result
+            yield self.operator()
+            yield self.term()
 
     def expression_end(self):
         return self.tokens.peek() in (')', ']', ';', ',')

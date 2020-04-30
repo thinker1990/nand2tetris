@@ -5,18 +5,20 @@ from code_map import *
 
 class CodeGenerator:
 
-    def __init__(self, parsed: JackClass, symbols: SymbolTable):
+    def __init__(self, parsed: JackClass):
         self._class = parsed
-        self._symbols = symbols
-        self._cur_method = 'main'
+        self._symbols = SymbolTable()
 
     def vm(self):
+        # Side Effect!
+        self._symbols.add_class_symbols(self._class)
         return merge(
             lmap(self.routine_vm, self._class.routines())
         )
 
     def routine_vm(self, routine: Subroutine):
-        self._cur_method = routine.name()  # Side Effect!
+        # Side Effect!
+        self._symbols.add_method_symbols(routine)
         return merge(
             self.routine_header_vm(routine),
             self.routine_implied_vm(routine.modifier()),
@@ -26,12 +28,13 @@ class CodeGenerator:
     def routine_header_vm(self, routine: Subroutine):
         return method_declaration_vm(
             method_name(routine.name(), self._class.name()),
-            self.variable_count(routine.body().local_variables())
+            self._symbols.method_var_count()
         )
 
     def routine_implied_vm(self, modifier):
         if modifier == 'constructor':
-            return allocate_object_vm(self.class_size())
+            size = self._symbols.class_instance_size()
+            return allocate_object_vm(size)
         elif modifier == 'method':
             return adjust_this_vm()
         else:
@@ -39,14 +42,6 @@ class CodeGenerator:
 
     def routine_body_vm(self, body: RoutineBody):
         return self.statements_vm(body.statements())
-
-    def class_size(self):
-        var_dec = self._class.variables()
-        fields = [dec for dec in var_dec if dec.modifier() == 'field']
-        return self.variable_count(fields)
-
-    def variable_count(self, var_dec):
-        return sum([len(dec.names()) for dec in var_dec])
 
     def statements_vm(self, statements):
         return merge(
@@ -101,11 +96,11 @@ class CodeGenerator:
     def assignment_vm(self, target):
         if isinstance(target, Variable):
             return assign_variable_vm(
-                self.var_property(target.name())
+                self._symbols.where_is(target.name())
             )
         else:
             return assign_array_entry_vm(
-                self.var_property(target.name()),
+                self._symbols.where_is(target.name()),
                 self.expression_vm(target.index())
             )
 
@@ -119,11 +114,11 @@ class CodeGenerator:
             return self.exclass_call_vm(call)
 
     def exclass_call_vm(self, call: ExClassCall):
-        target = self.find_variable(call.target())
-        if target:
+        if self._symbols.defined(call.target()):
+            target_type = self._symbols.type_of(call.target())
             return call_instance_vm(
-                self.var_property(call.target()),
-                method_name(call.routine(), target.s_type()),
+                self._symbols.where_is(call.target()),
+                method_name(call.routine(), target_type),
                 lmap(self.expression_vm, call.arguments())
             )
         else:
@@ -157,11 +152,11 @@ class CodeGenerator:
             return keyword_vm(term.value())
         elif isinstance(term, Variable):
             return variable_vm(
-                self.var_property(term.name())
+                self._symbols.where_is(term.name())
             )
         elif isinstance(term, ArrayEntry):
             return array_entry_vm(
-                self.var_property(term.name()),
+                self._symbols.where_is(term.name()),
                 self.expression_vm(term.index())
             )
         elif isinstance(term, UnaryTerm):
@@ -173,25 +168,6 @@ class CodeGenerator:
             return self.expression_vm(term)
         else:
             return self.call_routine_vm(term)
-
-    def var_property(self, name):
-        prop = self.find_variable(name)
-        if prop:
-            return prop.kind(), prop.index()
-        else:
-            raise Exception(f'{name} not defined.')
-
-    def find_variable(self, name):
-        symbols = self._symbols.method_symbols(self._cur_method)
-        v_property = symbols.get(name)
-        if v_property:
-            return v_property
-        symbols = self._symbols.class_symbols()
-        v_property = symbols.get(name)
-        if v_property:
-            return v_property
-        else:
-            return None
 
 
 def lmap(func, iterable):
