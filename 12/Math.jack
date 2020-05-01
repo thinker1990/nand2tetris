@@ -29,7 +29,9 @@ class Math {
         let twoToThe[12] = 4096;
         let twoToThe[13] = 8192;
         let twoToThe[14] = 16384;
-        let twoToThe[15] = 32768;
+        let twoToThe[15] = 16384 + 16384;
+
+        return;
     }
 
     /** Returns the absolute value of x. */
@@ -48,16 +50,20 @@ class Math {
      *  the Jack expressions x*y and multiply(x,y) return the same value.
      */
     function int multiply(int x, int y) {
-        var int index, result;
+        var int index, sum, shiftX;
 
         let index = 0;
-        let result = 0;
+        let sum = 0;
+        let shiftX = x;
         while ( index < 16 ) {
-            if ( bit(x, index) ) {
-                let result = result + y;
+            if ( Math.bit(y, index) ) {
+                let sum = sum + shiftX;
             }
-            let result = result + result;
+            let shiftX = shiftX + shiftX;
+            let index = index + 1;
         }
+
+        return sum;
     }
 
     /** Returns the integer part of x/y.
@@ -152,6 +158,6 @@ class Math {
     }
 
     function bool bit(int val, int index) {
-        return (val & twoToThe[index]) > 0;
+        return ~((val & twoToThe[index]) = 0);
     }
 }
