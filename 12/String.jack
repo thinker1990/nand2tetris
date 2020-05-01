@@ -11,54 +11,176 @@
  * string-oriented operations.
  */
 class String {
+    field Array content;
+    field int length;
+    field int maxLen;
 
     /** constructs a new empty string with a maximum length of maxLength
      *  and initial length of 0. */
     constructor String new(int maxLength) {
+        if ( maxLength < 0 ) {
+            do Sys.error(14);
+        }
+
+        if ( maxLength > 0 ) {
+            let content = Array.new(maxLength);
+        }
+        let length = 0;
+        let maxLen = maxLength;
+
+        return this;
     }
 
     /** Disposes this string. */
     method void dispose() {
+        if ( maxLen > 0 ) {
+            do content.dispose();
+        }
+        do Memory.deAlloc(this);
+
+        return;
     }
 
     /** Returns the current length of this string. */
     method int length() {
+        return length;
     }
 
     /** Returns the character at the j-th location of this string. */
     method char charAt(int j) {
+        if ( ~(j < length) ) {
+            do Sys.error(15);
+        }
+
+        return content[j];
     }
 
     /** Sets the character at the j-th location of this string to c. */
     method void setCharAt(int j, char c) {
+        if ( ~(j < length) ) {
+            do Sys.error(16);
+        }
+
+        let content[j] = c;
+        return;
     }
 
     /** Appends c to this string's end and returns this string. */
     method String appendChar(char c) {
+        if ( ~(length < maxLen) ) {
+            do Sys.error(17);
+        }
+
+        let content[length] = c;
+        let length = length + 1;
+        return this;
     }
 
     /** Erases the last character from this string. */
     method void eraseLastChar() {
+        if ( length = 0 ) {
+            do Sys.error(18);
+        }
+
+        let length = length - 1;
+        return;
     }
 
     /** Returns the integer value of this string, 
      *  until a non-digit character is detected. */
     method int intValue() {
+        var int value, index;
+        var bool negative;
+        var char currentChar;
+
+        let value = 0;
+        let negative = ( charAt(0) = 45 );  // '-'
+        if ( negative ) {
+            let index = 1;
+        }
+        else {
+            let index = 0;
+        }
+
+        while ( index < length ) {
+            let currentChar = charAt(index);
+            if ( (47 < currentChar) & (currentChar < 58) ) {
+                let value = (value * 10) + (currentChar - 48);
+            }
+            let index = index + 1;
+        }
+
+        if ( negative ) {
+            return -value;
+        }
+        else {
+            return value;
+        }
     }
 
     /** Sets this string to hold a representation of the given value. */
     method void setInt(int val) {
+        var int minNeed, absVal;
+
+        let absVal = Math.abs(val);
+        let minNeed = digitCount(absVal);
+        if ( val < 0 ) {
+            let minNeed = minNeed + 1;
+        }
+
+        if ( minNeed > maxLen ) {
+            do Sys.error(19);
+        }
+
+        let length = 0;
+        if ( val < 0 ) {
+            do appendChar(45);  // '-'
+        }
+        do int2String(absVal);
+        return;
     }
 
     /** Returns the new line character. */
     function char newLine() {
+        return 128;
     }
 
     /** Returns the backspace character. */
     function char backSpace() {
+        return 129;
     }
 
     /** Returns the double quote (") character. */
     function char doubleQuote() {
+        return 34;
+    }
+
+    method void int2String(int val) {
+        var int lastDigit;
+        var int quotient;
+
+        if ( val < 10 ) {
+            do appendChar(val + 48);
+        }
+        else {
+            let quotient = val / 10;
+            let lastDigit = val - (quotient * 10);
+            do int2String(quotient); 
+            do appendChar(lastDigit + 48);
+        }
+
+        return;
+    }
+
+    function int digitCount(int val) {
+        var int count;
+
+        let count = 0;
+        while ( val > 0 ) {
+            let count = count + 1;
+            let val = val / 10;
+        }
+
+        return count;
     }
 }
