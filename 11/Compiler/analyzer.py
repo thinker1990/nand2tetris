@@ -16,8 +16,8 @@ class Analyzer:
             raise Exception('Jack class expected')
         name = self.class_name()
         self.tokens.pop_symbol()  # {
-        variabls = *self.as_single_decs(self.class_vars())
-        routines = *self.subroutines()
+        variabls = list(self.as_single_decs(self.class_vars()))
+        routines = list(self.subroutines())
         self.tokens.pop_symbol()  # }
         return JackClass(name, variabls, routines)
 
@@ -37,7 +37,7 @@ class Analyzer:
         rtype = self.tokens.pop()
         name = self.tokens.pop_identifier()
         self.tokens.pop_symbol()  # (
-        params = *self.parameters()
+        params = list(self.parameters())
         self.tokens.pop_symbol()  # )
         body = self.routine_body()
         return Subroutine(modifier, rtype, name, params, body)
@@ -48,8 +48,8 @@ class Analyzer:
 
     def routine_body(self):
         self.tokens.pop_symbol()  # {
-        variables = *self.as_single_decs(self.local_vars())
-        statements = *self.statements()
+        variables = list(self.as_single_decs(self.local_vars()))
+        statements = list(self.statements())
         self.tokens.pop_symbol()  # }
         return RoutineBody(variables, statements)
 
@@ -166,7 +166,7 @@ class Analyzer:
     def call(self):
         routine = self.tokens.pop_identifier()
         self.tokens.pop_symbol()  # (
-        arguments = *self.argument_list()
+        arguments = list(self.argument_list())
         self.tokens.pop_symbol()  # )
         return routine, arguments
 
@@ -188,7 +188,7 @@ class Analyzer:
 
     def statements_in_braces(self):
         self.tokens.pop_symbol()  # {
-        statements = *self.statements()
+        statements = list(self.statements())
         self.tokens.pop_symbol()  # }
         return statements
 
@@ -196,7 +196,7 @@ class Analyzer:
 
     def expression(self):
         first = self.term()
-        rest = *self.op_terms()
+        rest = list(self.op_terms())
         return Expression([first] + rest)
 
     def op_terms(self):

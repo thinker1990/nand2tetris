@@ -171,4 +171,4 @@ class CodeGenerator:
 
 
 def lmap(func, iterable):
-    return *map(func, iterable)
+    return list(map(func, iterable))
