@@ -11,33 +11,203 @@
  */
 class Screen {
 
+    static int screen;
+    static bool black;
+    static Array mask;
+
     /** Initializes the Screen. */
     function void init() {
+        let black = true;
+        let screen = 16384;
+
+        let mask = Array.new(16);
+        let mask[0] = 1;
+        let mask[1] = 2;
+        let mask[2] = 4;
+        let mask[3] = 8;
+        let mask[4] = 16;
+        let mask[5] = 32;
+        let mask[6] = 64;
+        let mask[7] = 128;
+        let mask[8] = 256;
+        let mask[9] = 512;
+        let mask[10] = 1024;
+        let mask[11] = 2048;
+        let mask[12] = 4096;
+        let mask[13] = 8192;
+        let mask[14] = 16384;
+        let mask[15] = 16384 + 16384;
+
+        do Screen.clearScreen();
+        return;
     }
 
     /** Erases the entire screen. */
     function void clearScreen() {
+        var int start;
+
+        let start = screen;
+        while ( start < 24576 ) {
+            do Memory.poke(start, 0);
+            let start = start + 1;
+        }
+
+        return;
     }
 
     /** Sets the current color, to be used for all subsequent drawXXX commands.
      *  Black is represented by true, white by false. */
     function void setColor(boolean b) {
+        let black = b;
+
+        return;
     }
 
     /** Draws the (x,y) pixel, using the current color. */
     function void drawPixel(int x, int y) {
+        var int location, bit, q, origin;
+
+        if ( ~((-1 < x) & (x < 512)) | ~((-1 < y) & (y < 256)) ) {
+            do Sys.error(7);
+        }
+
+        let q = x / 16;
+        let bit = x - (16*q);
+        let location = screen + (y*32) + q;
+        let origin = Memory.peek(location);
+        if ( black ) {
+            do Memory.poke(location, origin|mask[bit]);
+        }
+        else {
+            do Memory.poke(location, origin&~(mask[bit]));
+        }
+
+        return;
     }
 
     /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
     function void drawLine(int x1, int y1, int x2, int y2) {
+        var int dx, dy, from, to, bias;
+
+        if ( ~((-1 < x1) & (x1 < 512)) | ~((-1 < y1) & (y1 < 256)) ) {
+            do Sys.error(8);
+        }
+        if ( ~((-1 < x2) & (x2 < 512)) | ~((-1 < y2) & (y2 < 256)) ) {
+            do Sys.error(8);
+        }
+
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+
+        if ( dx = 0 ) {
+            let from = Math.min(y1, y2);
+            let to = Math.max(y1, y2);
+            while ( ~(from > to) ) {
+                do Screen.drawPixel(x1, from);
+                let from = from + 1;
+            }
+            return;
+        }
+
+        if ( dy = 0 ) {
+            let from = Math.min(x1, x2);
+            let to = Math.max(x1, x2);
+            while ( ~(from > to) ) {
+                do Screen.drawPixel(from, y1);
+                let from = from + 1;
+            }
+            return;
+        }
+
+        if ( (dx > 0) & (dy > 0) ) {
+            let from = 0;
+            let to = 0;
+            let bias = 0;
+            while ( ~(from > dx) & ~(to > dy) ) {
+                do Screen.drawPixel(x1+from, y1+to);
+                if ( bias < 0 ) {
+                    let from = from + 1;
+                    let bias = bias + dy;
+                }
+                else {
+                    let to = to + 1;
+                    let bias = bias - dx;
+                }
+            }
+            return;
+        }
+
+        if ( (dx < 0) & (dy < 0) ) {
+            do Screen.drawLine(x2, y2, x1, y1);
+            return;
+        }
+
+        if ( (dx > 0) & (dy < 0) ) {
+            let dy = -dy;
+            let from = 0;
+            let to = 0;
+            let bias = 0;
+            while ( ~(from > dx) & ~(to > dy) ) {
+                do Screen.drawPixel(x1+from, y1-to);
+                if ( bias < 0 ) {
+                    let from = from + 1;
+                    let bias = bias + dy;
+                }
+                else {
+                    let to = to + 1;
+                    let bias = bias - dx;
+                }
+            }
+            return;
+        }
+
+        if ( (dx < 0) & (dy > 0) ) {
+            do Screen.drawLine(x2, y2, x1, y1);
+            return;
+        }
+
+        return;
     }
 
     /** Draws a filled rectangle whose top left corner is (x1, y1)
      * and bottom right corner is (x2,y2), using the current color. */
     function void drawRectangle(int x1, int y1, int x2, int y2) {
+        var int index;
+
+        if ( ~((-1 < x1) & (x1 < 512)) | ~((-1 < y1) & (y1 < 256)) ) {
+            do Sys.error(9);
+        }
+        if ( ~((-1 < x2) & (x2 < 512)) | ~((-1 < y2) & (y2 < 256)) ) {
+            do Sys.error(9);
+        }
+
+        let index = y1;
+        while ( ~(index > y2) ) {
+            do Screen.drawLine(x1, index, x2, index);
+            let index = index + 1;
+        }
+
+        return;
     }
 
     /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
     function void drawCircle(int x, int y, int r) {
+        var int dy, dist;
+
+        if ( ~((-1 < x) & (x < 512)) | ~((-1 < y) & (y < 256)) ) {
+            do Sys.error(12);
+        }
+        if ( ~((-1 < (x-r)) & ((x+r) < 512)) | ~((-1 < (y-r)) & ((y+r) < 256)) ) {
+            do Sys.error(13);
+        }
+
+        let dy = -r;
+        while ( ~(dy > r) ) {
+            let dist = Math.sqrt((r*r) - (dy*dy));
+            do Screen.drawLine(x-dist, y+dy, x+dist, y+dy);
+            let dy = dy + 1;
+        }
+
+        return;
     }
 }
